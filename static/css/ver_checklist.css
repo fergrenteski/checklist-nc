@@ -1,0 +1,19 @@
+/* Ver Checklist CSS - Estilos para visualização de checklist */
+
+/* Prevenir piscar dos modais */
+.modal.fade .modal-dialog {
+    transition: transform 0.2s ease-out;
+}
+
+.modal-backdrop {
+    transition: opacity 0.15s linear;
+}
+
+/* Garantir que o modal não pisque */
+.modal {
+    display: none;
+}
+
+.modal.show {
+    display: block;
+}

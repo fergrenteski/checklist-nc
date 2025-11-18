@@ -1,0 +1,319 @@
+/* Melhorias de Responsividade */
+
+/* Cards de Checklist - Index */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .card-title {
+        font-size: 1.1rem;
+    }
+    
+    /* Botões em cards */
+    .card-footer .d-flex {
+        flex-direction: column;
+    }
+    
+    .card-footer .btn {
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-footer .btn:last-child {
+        margin-bottom: 0;
+    }
+}
+
+/* Tabelas Responsivas */
+.table-responsive {
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 992px) {
+    /* Esconder colunas menos importantes em telas menores */
+    .table th:nth-child(2),
+    .table td:nth-child(2) {
+        display: none;
+    }
+    
+    /* Reduzir padding */
+    .table th,
+    .table td {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Badges menores */
+    .badge {
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Tabela em modo card em mobile */
+    .table thead {
+        display: none;
+    }
+    
+    .table,
+    .table tbody,
+    .table tr,
+    .table td {
+        display: block;
+        width: 100%;
+    }
+    
+    .table tr {
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .table td {
+        text-align: right;
+        padding: 0.75rem;
+        border: none;
+        border-bottom: 1px solid #f0f0f0;
+        position: relative;
+        padding-left: 50%;
+    }
+    
+    .table td:last-child {
+        border-bottom: none;
+    }
+    
+    .table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0.75rem;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: bold;
+        text-align: left;
+    }
+    
+    .table td:first-child {
+        background: #f8f9fa;
+        font-weight: bold;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+    
+    /* Botões de ação em mobile */
+    .btn-group-sm {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group-sm .btn,
+    .btn-group-sm form {
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+    
+    .btn-group-sm .btn:last-child,
+    .btn-group-sm form:last-child {
+        margin-bottom: 0;
+    }
+}
+
+/* Estatísticas Responsivas */
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card h2 {
+        font-size: 1.5rem;
+    }
+    
+    .stat-card h6 {
+        font-size: 0.875rem;
+    }
+}
+
+/* Modal Responsivo */
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: 1rem;
+    }
+    
+    .modal-title {
+        font-size: 1.1rem;
+    }
+    
+    .modal-body dl.row dt,
+    .modal-body dl.row dd {
+        font-size: 0.875rem;
+    }
+}
+
+/* Navbar Responsivo */
+@media (max-width: 992px) {
+    .navbar-nav {
+        padding-top: 1rem;
+    }
+    
+    .navbar-nav .nav-item {
+        margin-bottom: 0.5rem;
+    }
+    
+    .notification-badge {
+        position: relative;
+        margin-left: 0.5rem;
+    }
+}
+
+/* Formulários Responsivos */
+@media (max-width: 576px) {
+    .form-label {
+        font-size: 0.875rem;
+    }
+    
+    .form-control,
+    .form-select {
+        font-size: 0.875rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Collapse panels em mobile */
+@media (max-width: 768px) {
+    .collapse .border {
+        padding: 1rem !important;
+    }
+    
+    .collapse h6 {
+        font-size: 0.95rem;
+    }
+}
+
+/* Progress bars */
+@media (max-width: 576px) {
+    .progress {
+        height: 20px !important;
+    }
+    
+    .progress-bar {
+        font-size: 0.75rem;
+    }
+}
+
+/* Badges e Pills */
+.badge {
+    white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+    .badge {
+        padding: 0.35em 0.5em;
+        font-size: 0.7rem;
+    }
+}
+
+/* Input groups em mobile */
+@media (max-width: 576px) {
+    .input-group {
+        flex-wrap: wrap;
+    }
+    
+    .input-group .form-control {
+        margin-bottom: 0.5rem;
+    }
+    
+    .input-group .btn {
+        width: 100%;
+    }
+}
+
+/* Tabs responsivos */
+@media (max-width: 768px) {
+    .nav-tabs {
+        flex-wrap: wrap;
+        border-bottom: none;
+    }
+    
+    .nav-tabs .nav-link {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.25rem;
+        border-radius: 0.375rem !important;
+        margin-right: 0.25rem;
+    }
+    
+    .nav-tabs .nav-link.active {
+        border: 1px solid #0d6efd !important;
+        background: #0d6efd;
+        color: white !important;
+    }
+}
+
+/* Comentários e chat */
+@media (max-width: 576px) {
+    .border.rounded.p-3 {
+        padding: 1rem !important;
+    }
+    
+    .mb-2 small {
+        font-size: 0.75rem;
+    }
+}
+
+/* Utilitários de espaçamento responsivo */
+@media (max-width: 768px) {
+    .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .my-4 {
+        margin-top: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    h1 {
+        font-size: 1.75rem;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    h3 {
+        font-size: 1.25rem;
+    }
+    
+    h5 {
+        font-size: 1.1rem;
+    }
+}
+
+/* Scroll suave em elementos com overflow */
+* {
+    scroll-behavior: smooth;
+}
+
+/* Container responsivo */
+@media (max-width: 576px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}

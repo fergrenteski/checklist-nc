@@ -1,0 +1,118 @@
+/* Base CSS - Estilos globais do sistema */
+
+:root {
+    --primary-color: #0d6efd;
+    --success-color: #198754;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+}
+
+body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+
+.badge-leve {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.badge-moderada {
+    background-color: #fd7e14;
+    color: #fff;
+}
+
+.badge-grave {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.aderencia-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.progress-custom {
+    height: 30px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.btn-action {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.stat-card {
+    border-left: 4px solid;
+}
+
+.stat-card.leve {
+    border-left-color: #ffc107;
+}
+
+.stat-card.moderada {
+    border-left-color: #fd7e14;
+}
+
+.stat-card.grave {
+    border-left-color: #dc3545;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.notification-item {
+    border-left: 4px solid #0d6efd;
+    transition: background-color 0.3s;
+}
+
+.notification-item:hover {
+    background-color: #f8f9fa;
+}
+
+.notification-item.unread {
+    background-color: #e7f3ff;
+    font-weight: 500;
+}
+
+.toast-notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+}

@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/preencher_checklist.css') }}">
+{% endblock %}
+
+{% block title %}Preencher Checklist - {{ checklist.projeto }} - Sistema NC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-clipboard-check"></i> Preencher Checklist</h1>
+        <p class="text-muted">{{ checklist.template.nome }} - {{ checklist.projeto }}</p>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> <strong>Instruções:</strong>
+    <ul class="mb-0 mt-2">
+        <li>Preencha o <strong>resultado</strong> (Conforme, Não Conforme ou N/A) para cada item</li>
+        <li>Para itens <strong>Não Conformes</strong>, preencha: classificação, responsável e ação corretiva</li>
+        <li>O <strong>prazo será calculado automaticamente</strong>: Leve=5 dias, Moderada=3 dias, Grave=2 dias</li>
+        <li>Você pode salvar o formulário parcialmente e continuar depois</li>
+    </ul>
+</div>
+
+<form method="POST" action="{{ url_for('preencher.preencher_checklist', checklist_id=checklist.id) }}">
+    {% set secao_atual = '' %}
+    {% for item in checklist.itens|sort(attribute='item_template.ordem') %}
+        
+        {% if item.item_template.secao != secao_atual %}
+            {% set secao_atual = item.item_template.secao %}
+            {% if not loop.first %}
+                </div></div>
+            {% endif %}
+            
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-folder"></i> {{ secao_atual }}</h4>
+                </div>
+                <div class="card-body">
+        {% endif %}
+        
+        <div class="border-bottom pb-4 mb-4" id="item-{{ item.id }}">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5 class="text-primary">
+                        <span class="badge bg-secondary">{{ item.item_template.ordem }}</span>
+                        {{ item.item_template.item_verificacao }}
+                    </h5>
+                    <p class="text-muted mb-3">
+                        <i class="bi bi-check-circle"></i> <strong>Critério:</strong> 
+                        {{ item.item_template.criterio_conformidade }}
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label"><strong>Resultado *</strong></label>
+                    <select class="form-select" 
+                            name="item_{{ item.id }}_resultado" 
+                            id="resultado_{{ item.id }}"
+                            onchange="toggleNC({{ item.id }})"
+                            {% if item.resultado %}value="{{ item.resultado }}"{% endif %}>
+                        <option value="">Selecione...</option>
+                        <option value="Conforme" {% if item.resultado == 'Conforme' %}selected{% endif %}>
+                            ✓ Conforme
+                        </option>
+                        <option value="Não Conforme" {% if item.resultado == 'Não Conforme' %}selected{% endif %}>
+                            ✗ Não Conforme
+                        </option>
+                        <option value="N/A" {% if item.resultado == 'N/A' %}selected{% endif %}>
+                            − N/A
+                        </option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-12">
+                    <label class="form-label">Observações</label>
+                    <textarea class="form-control" 
+                              name="item_{{ item.id }}_observacao" 
+                              rows="2"
+                              placeholder="Adicione observações relevantes sobre este item...">{{ item.observacao or '' }}</textarea>
+                </div>
+            </div>
+            
+            <!-- Campos de NC (aparecem apenas se resultado for Não Conforme) -->
+            <div id="nc_fields_{{ item.id }}" 
+                 class="mt-3 p-3 bg-danger bg-opacity-10 border border-danger rounded"
+                 style="display: {% if item.resultado == 'Não Conforme' %}block{% else %}none{% endif %};">
+                
+                <h6 class="text-danger mb-3">
+                    <i class="bi bi-exclamation-triangle"></i> Dados da Não Conformidade
+                </h6>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="form-label"><strong>Classificação *</strong></label>
+                        <select class="form-select" 
+                                name="item_{{ item.id }}_classificacao"
+                                {% if item.resultado == 'Não Conforme' %}required{% endif %}>
+                            <option value="">Selecione...</option>
+                            <option value="L" {% if item.classificacao_nc == 'L' %}selected{% endif %}>
+                                🟢 Leve (5 dias)
+                            </option>
+                            <option value="M" {% if item.classificacao_nc == 'M' %}selected{% endif %}>
+                                🟡 Moderada (3 dias)
+                            </option>
+                            <option value="G" {% if item.classificacao_nc == 'G' %}selected{% endif %}>
+                                🔴 Grave (2 dias)
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-5">
+                        <label class="form-label"><strong>Responsável pela Correção *</strong></label>
+                        <select class="form-select" 
+                                name="item_{{ item.id }}_responsavel"
+                                {% if item.resultado == 'Não Conforme' %}required{% endif %}>
+                            <option value="">Selecione um responsável...</option>
+                            {% for usuario in usuarios %}
+                            <option value="{{ usuario.id }}" {% if item.responsavel_id == usuario.id %}selected{% endif %}>
+                                {{ usuario.nome }} - {{ usuario.funcao }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label"><strong>Prazo</strong></label>
+                        <input type="text" 
+                               class="form-control" 
+                               value="Automático (conforme classificação)" 
+                               disabled>
+                        <small class="text-muted">L=5d, M=3d, G=2d</small>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <label class="form-label"><strong>Ação Corretiva Necessária *</strong></label>
+                        <textarea class="form-control" 
+                                  name="item_{{ item.id }}_acao" 
+                                  rows="2"
+                                  placeholder="Descreva a ação corretiva necessária para resolver esta não conformidade..."
+                                  {% if item.resultado == 'Não Conforme' %}required{% endif %}>{{ item.acao_corretiva or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if loop.last %}
+            </div></div>
+        {% endif %}
+    {% endfor %}
+    
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="d-grid gap-2 d-md-flex justify-content-md-between align-items-center">
+                <div>
+                    <i class="bi bi-info-circle text-muted"></i>
+                    <span class="text-muted">
+                        Total de {{ checklist.itens|length }} itens para preencher
+                    </span>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('main.index') }}" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-check-circle"></i> Salvar Checklist
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/preencher_checklist.js') }}"></script>
+<script>
+    // Inicializar toggleNC para cada item
+    document.addEventListener('DOMContentLoaded', function() {
+        {% for item in checklist.itens %}
+            toggleNC({{ item.id }});
+        {% endfor %}
+    });
+</script>
+{% endblock %}
+{% endblock %}
+

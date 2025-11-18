@@ -1,0 +1,1017 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas NCs - Sistema NC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-exclamation-triangle-fill text-warning"></i> Minhas Não Conformidades</h1>
+        <p class="text-muted">Gerencie e acompanhe suas não conformidades</p>
+    </div>
+</div>
+
+<!-- Tabs para separar NCs atribuídas e escaladas -->
+<ul class="nav nav-tabs mb-4" id="ncTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="minhas-tab" data-bs-toggle="tab" data-bs-target="#minhas" type="button" role="tab">
+            <i class="bi bi-person-check"></i> Minhas NCs ({{ ncs_responsavel|length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="escaladas-tab" data-bs-toggle="tab" data-bs-target="#escaladas" type="button" role="tab">
+            <i class="bi bi-arrow-up-circle"></i> NCs Escaladas ({{ ncs_escaladas|length }})
+        </button>
+    </li>
+    <!-- Aba de aprovações apenas para auditores que têm solicitações pendentes -->
+    {% if aprovacoes_pendentes %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-warning fw-bold" id="aprovacoes-tab" data-bs-toggle="tab" data-bs-target="#aprovacoes" type="button" role="tab">
+            <i class="bi bi-hourglass-split"></i> Aguardando Minha Aprovação 
+            <span class="badge bg-warning">{{ aprovacoes_pendentes|length }}</span>
+        </button>
+    </li>
+    {% endif %}
+</ul>
+
+<div class="tab-content" id="ncTabContent">
+    <!-- Minhas NCs (como responsável) -->
+    <div class="tab-pane fade show active" id="minhas" role="tabpanel">
+        {% if ncs_responsavel %}
+        
+        <!-- Sub-abas para filtrar por status -->
+        <ul class="nav nav-pills mb-3" id="minhasStatusTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="minhas-ativas-tab" data-bs-toggle="tab" data-bs-target="#minhas-ativas" type="button" role="tab">
+                    <i class="bi bi-exclamation-circle"></i> Ativas ({{ ncs_responsavel|selectattr('status_nc', 'ne', 'Resolvida')|list|length }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="minhas-resolvidas-tab" data-bs-toggle="tab" data-bs-target="#minhas-resolvidas" type="button" role="tab">
+                    <i class="bi bi-check-circle"></i> Resolvidas ({{ ncs_responsavel|selectattr('status_nc', 'equalto', 'Resolvida')|list|length }})
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="minhasStatusTabContent">
+            <!-- NCs Ativas -->
+            <div class="tab-pane fade show active" id="minhas-ativas" role="tabpanel">
+        <div class="row">
+            {% for item in ncs_responsavel %}
+            {% if item.status_nc != 'Resolvida' %}
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 {% if item.dias_restantes() is not none and item.dias_restantes() < 2 %}border-danger{% endif %}">
+                    <div class="card-header {% if item.classificacao_nc == 'G' %}bg-danger text-white{% elif item.classificacao_nc == 'M' %}bg-warning{% else %}bg-info text-white{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>
+                                {% if item.classificacao_nc == 'L' %}
+                                    🟢 NC Leve
+                                {% elif item.classificacao_nc == 'M' %}
+                                    🟡 NC Moderada
+                                {% elif item.classificacao_nc == 'G' %}
+                                    🔴 NC Grave
+                                {% endif %}
+                            </span>
+                            <span class="badge {% if item.status_nc == 'Resolvida' %}bg-success{% elif item.status_nc == 'Em Andamento' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                {{ item.status_nc }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">{{ item.item_template.secao }}</h6>
+                        <h5 class="card-title">{{ item.item_template.item_verificacao }}</h5>
+                        
+                        <p class="card-text">
+                            <strong>Critério:</strong><br>
+                            <small>{{ item.item_template.criterio_conformidade }}</small>
+                        </p>
+                        
+                        {% if item.observacao %}
+                        <div class="alert alert-light py-2">
+                            <strong>Observação:</strong><br>
+                            <small>{{ item.observacao }}</small>
+                        </div>
+                        {% endif %}
+                        
+                        {% if item.acao_corretiva %}
+                        <div class="alert alert-primary py-2">
+                            <strong><i class="bi bi-tools"></i> Ação Corretiva:</strong><br>
+                            {{ item.acao_corretiva }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <small class="text-muted">
+                                <i class="bi bi-folder"></i> {{ item.checklist.projeto }}
+                            </small>
+                            {% if item.get_prazo_limite() %}
+                            <div>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar-event"></i> 
+                                    {{ item.get_prazo_limite().strftime('%d/%m/%Y') }}
+                                </small>
+                                {% set dias = item.dias_restantes() %}
+                                {% if dias is not none %}
+                                    {% if dias < 0 %}
+                                        <span class="badge bg-danger">Atrasado {{ dias|abs }}d</span>
+                                    {% elif dias == 0 %}
+                                        <span class="badge bg-warning">Hoje!</span>
+                                    {% elif dias <= 2 %}
+                                        <span class="badge bg-warning">{{ dias }}d</span>
+                                    {% else %}
+                                        <span class="badge bg-success">{{ dias }}d</span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if item.escalado %}
+                        <div class="alert alert-warning py-2 mb-3">
+                            <small><i class="bi bi-arrow-up-circle"></i> <strong>Escalado para:</strong> {{ item.escalado_para.nome }}</small>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- SEÇÃO DE CONVERSA / COMENTÁRIOS -->
+                        <div class="border rounded p-3 bg-light mb-3" style="max-height: 300px; overflow-y: auto;">
+                            <h6 class="mb-3"><i class="bi bi-chat-dots"></i> Conversa sobre esta NC</h6>
+                            
+                            {% if item.comentarios %}
+                                {% for comentario in item.comentarios %}
+                                <div class="mb-2">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-2">
+                                            {% if comentario.usuario_id == item.checklist.criador_id %}
+                                                <span class="badge bg-primary" title="Auditor">👨‍💼</span>
+                                            {% elif comentario.usuario_id == item.responsavel_id %}
+                                                <span class="badge bg-success" title="Responsável">👷</span>
+                                            {% elif item.escalado_para_id and comentario.usuario_id == item.escalado_para_id %}
+                                                <span class="badge bg-warning" title="Superior">⭐</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">👤</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="bg-white border rounded p-2 {% if comentario.tipo_solicitacao %}border-info border-2{% endif %}">
+                                                <div class="d-flex justify-content-between">
+                                                    <strong class="text-primary">{{ comentario.usuario.nome }}</strong>
+                                                    <small class="text-muted">{{ comentario.data_criacao.strftime('%d/%m %H:%M') }}</small>
+                                                </div>
+                                                <p class="mb-0 mt-1">{{ comentario.comentario }}</p>
+                                                
+                                                <!-- Status de aprovação -->
+                                                {% if comentario.tipo_solicitacao %}
+                                                <div class="mt-2">
+                                                    {% if comentario.status_aprovacao == 'pendente' %}
+                                                        <span class="badge bg-warning">⏳ Aguardando aprovação de {{ item.checklist.criador.nome }}</span>
+                                                        
+                                                        <!-- Botões de aprovação (apenas para auditor) -->
+                                                        {% if current_user.id == item.checklist.criador_id %}
+                                                        <div class="align-items-start d-flex mt-2 gap-2">
+                                                            <button class="btn btn-success btn-sm" data-bs-toggle="collapse" data-bs-target="#aprovar{{ comentario.id }}">
+                                                                <i class="bi bi-check-circle"></i> Aprovar
+                                                            </button>
+                                                            <button class="btn btn-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#rejeitar{{ comentario.id }}">
+                                                                <i class="bi bi-x-circle"></i> Rejeitar
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        <!-- Form de aprovação -->
+                                                        <div class="collapse mt-2" id="aprovar{{ comentario.id }}">
+                                                            <form method="POST" action="{{ url_for('aprovacao.aprovar_solicitacao', comentario_id=comentario.id) }}" class="border rounded p-2 bg-light">
+                                                                <input type="hidden" name="acao" value="aprovar">
+                                                                <textarea name="justificativa" class="form-control form-control-sm mb-2" rows="2" placeholder="Justificativa (opcional)"></textarea>
+                                                                <button type="submit" class="btn btn-success btn-sm w-100">Confirmar Aprovação</button>
+                                                            </form>
+                                                        </div>
+                                                        
+                                                        <!-- Form de rejeição -->
+                                                        <div class="collapse mt-2" id="rejeitar{{ comentario.id }}">
+                                                            <form method="POST" action="{{ url_for('aprovacao.aprovar_solicitacao', comentario_id=comentario.id) }}" class="border rounded p-2 bg-light">
+                                                                <input type="hidden" name="acao" value="rejeitar">
+                                                                <textarea name="justificativa" class="form-control form-control-sm mb-2" rows="2" placeholder="Motivo da rejeição (opcional)"></textarea>
+                                                                <button type="submit" class="btn btn-danger btn-sm w-100">Confirmar Rejeição</button>
+                                                            </form>
+                                                        </div>
+                                                        {% endif %}
+                                                    
+                                                    {% elif comentario.status_aprovacao == 'aprovado' %}
+                                                        <span class="badge bg-success">✅ Aprovado por {{ comentario.aprovador.nome }}</span>
+                                                    
+                                                    {% elif comentario.status_aprovacao == 'rejeitado' %}
+                                                        <span class="badge bg-danger">❌ Rejeitado por {{ comentario.aprovador.nome }}</span>
+                                                    
+                                                    {% elif comentario.status_aprovacao == 'cancelado' %}
+                                                        <span class="badge bg-secondary">⚠️ Cancelado (ação direta do auditor)</span>
+                                                    {% endif %}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted text-center mb-0">
+                                    <i class="bi bi-chat-left-text"></i> Nenhum comentário ainda. Inicie a conversa!
+                                </p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Alerta de Bloqueio para Responsável quando Escalado e não Aceito -->
+                        {% if item.escalado and not item.escalado_aceito and current_user.id == item.responsavel_id %}
+                        <div class="alert alert-warning mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-lock-fill me-2" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <strong>NC Escalada - Aguardando Confirmação</strong>
+                                    <p class="mb-0 small">Esta NC foi escalada para <strong>{{ item.escalado_para.nome }}</strong>. Você não poderá comentar ou realizar ações até que o superior aceite ou recuse o escalamento.</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Formulário de comentário - Bloqueado para responsável quando escalado e não aceito -->
+                        {% if item.status_nc != 'Resolvida' and not (item.escalado and not item.escalado_aceito) %}
+                        <form method="POST" action="{{ url_for('nc.comentar_item', item_id=item.id) }}" class="mb-2">
+                            <div class="input-group">
+                                <input type="text" name="comentario" class="form-control" placeholder="Digite seu comentário..." required>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </div>
+                        </form>
+                        {% endif %}
+                        
+                        <!-- Botões de ação do AUDITOR (pode fechar e propor prazo SEM aprovação) -->
+                        {% if current_user.id == item.checklist.criador_id and item.status_nc != 'Resolvida' %}
+                        <div class="d-flex flex-column gap-2 mb-2">
+                            <button class="btn btn-warning btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#proporPrazoAuditor{{ item.id }}">
+                                <i class="bi bi-calendar-plus"></i> Propor Novo Prazo
+                            </button>
+                            
+                            <button class="btn btn-success btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#fecharNCAuditor{{ item.id }}">
+                                <i class="bi bi-check-circle"></i> Fechar NC
+                            </button>
+                        </div>
+                        
+                        <!-- Formulário de propor prazo (AUDITOR - sem aprovação) -->
+                        <div class="collapse mb-2" id="proporPrazoAuditor{{ item.id }}">
+                            <form method="POST" action="{{ url_for('aprovacao.propor_prazo', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                <h6 class="fw-bold mb-2"><i class="bi bi-calendar-plus"></i> Propor Novo Prazo (Auditor)</h6>
+                                <div class="mb-2">
+                                    <label class="form-label fw-bold">Nova Data de Resolução *</label>
+                                    <input type="date" name="nova_data_resolucao" class="form-control" required>
+                                    <small class="text-muted">Prazo atual: {{ item.get_prazo_limite().strftime('%d/%m/%Y') if item.get_prazo_limite() else 'Não definido' }}</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Motivo (opcional)</label>
+                                    <textarea name="motivo_prazo" class="form-control" rows="2" placeholder="Explique o motivo da mudança de prazo..."></textarea>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="bi bi-calendar-check"></i> Confirmar Novo Prazo
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#proporPrazoAuditor{{ item.id }}">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Formulário de fechar NC (AUDITOR - sem aprovação) -->
+                        <div class="collapse mb-2" id="fecharNCAuditor{{ item.id }}">
+                            <form method="POST" action="{{ url_for('aprovacao.fechar_nc', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                <h6 class="fw-bold mb-2"><i class="bi bi-check-circle"></i> Fechar NC (Auditor)</h6>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Motivo do Fechamento *</label>
+                                    <textarea name="motivo_fechamento" class="form-control" rows="3" placeholder="Explique o motivo do fechamento desta NC..." required></textarea>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-check-circle-fill"></i> Confirmar Fechamento
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#fecharNCAuditor{{ item.id }}">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Botões de ação do SUPERIOR (escalado e aceito - propor prazo e fechar COM aprovação) -->
+                        {% set tem_aprovacao_pendente = item.comentarios|selectattr('tipo_solicitacao', 'ne', None)|selectattr('status_aprovacao', 'equalto', 'pendente')|list|length > 0 %}
+                        {% if item.escalado and item.escalado_aceito and current_user.id == item.escalado_para_id and item.status_nc != 'Resolvida' and not tem_aprovacao_pendente and item.escalado_aceito %}
+                        <div class="d-flex flex-column gap-2 mb-2">
+                            <button class="btn btn-warning btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#proporPrazoSuperior{{ item.id }}">
+                                <i class="bi bi-calendar-plus"></i> Propor Novo Prazo
+                            </button>
+                            
+                            <button class="btn btn-success btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#fecharNCSuperior{{ item.id }}">
+                                <i class="bi bi-check-circle"></i> Fechar NC
+                            </button>
+                        </div>
+                        
+                        <!-- Formulário de propor prazo (SUPERIOR - COM aprovação) -->
+                        <div class="collapse mb-2" id="proporPrazoSuperior{{ item.id }}">
+                            <form method="POST" action="{{ url_for('aprovacao.propor_prazo', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                <h6 class="fw-bold mb-2"><i class="bi bi-calendar-plus"></i> Propor Novo Prazo</h6>
+                                <div class="mb-2">
+                                    <label class="form-label fw-bold">Nova Data de Resolução *</label>
+                                    <input type="date" name="nova_data_resolucao" class="form-control" required>
+                                    <small class="text-muted">Prazo atual: {{ item.get_prazo_limite().strftime('%d/%m/%Y') if item.get_prazo_limite() else 'Não definido' }}</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Motivo *</label>
+                                    <textarea name="motivo_prazo" class="form-control" rows="2" placeholder="Explique o motivo da mudança de prazo..." required></textarea>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="bi bi-send"></i> Solicitar Aprovação
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#proporPrazoSuperior{{ item.id }}">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Formulário de fechar NC (SUPERIOR - COM aprovação) -->
+                        <div class="collapse mb-2" id="fecharNCSuperior{{ item.id }}">
+                            <form method="POST" action="{{ url_for('aprovacao.fechar_nc', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                <h6 class="fw-bold mb-2"><i class="bi bi-check-circle"></i> Fechar NC</h6>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Motivo do Fechamento *</label>
+                                    <textarea name="motivo_fechamento" class="form-control" rows="3" placeholder="Explique o motivo do fechamento desta NC..." required></textarea>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-send"></i> Solicitar Aprovação
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#fecharNCSuperior{{ item.id }}">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-footer bg-white">
+                        {% set tem_aprovacao_pendente = item.comentarios|selectattr('tipo_solicitacao', 'ne', None)|selectattr('status_aprovacao', 'equalto', 'pendente')|list|length > 0 %}
+                        
+                        <!-- Controle do RESPONSÁVEL: Marcar como Resolvida (apenas responsável, não superior) -->
+                        {% if current_user.id == item.responsavel_id and item.status_nc != 'Resolvida' and not tem_aprovacao_pendente and not (item.escalado and not item.escalado_aceito) %}
+                        <div class="d-flex flex-column gap-2">
+                            <!-- Botão para marcar como Resolvida -->
+                            <button class="btn btn-success btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#resolverResp{{ item.id }}">
+                                <i class="bi bi-check-circle"></i> Marcar como Resolvida
+                            </button>
+                            
+                            <!-- Formulário de resolução (collapsible) -->
+                            <div class="collapse" id="resolverResp{{ item.id }}">
+                                <form method="POST" action="{{ url_for('nc.atualizar_status', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                    <input type="hidden" name="status" value="Resolvida">
+                                    <div class="mb-2">
+                                        <label class="form-label fw-bold">Como a NC foi resolvida? *</label>
+                                        <textarea name="justificativa_resolucao" class="form-control" rows="3" placeholder="Descreva as ações tomadas para resolver a não conformidade..." required></textarea>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="bi bi-send"></i> Solicitar Aprovação
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#resolverResp{{ item.id }}">
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        {% elif item.status_nc == 'Resolvida' %}
+                        <div class="text-center text-success">
+                            <i class="bi bi-check-circle-fill"></i> <strong>Resolvida</strong>{% if item.data_resolucao %} em {{ item.data_resolucao.strftime('%d/%m/%Y') }}{% endif %}
+                            {% if item.motivo_fechamento %}
+                            <br><small>{{ item.motivo_fechamento }}</small>
+                            {% endif %}
+                        </div>
+                        {% elif item.escalado and not item.escalado_aceito %}
+                        <div class="text-center text-warning">
+                            <i class="bi bi-hourglass-split"></i> Aguardando aceite do superior ({{ item.escalado_para.nome }})
+                        </div>
+                        {% elif tem_aprovacao_pendente %}
+                        <div class="text-center text-info">
+                            <i class="bi bi-hourglass-split"></i> Aguardando aprovação de {{ item.checklist.criador.nome }} (Auditor)
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- Mensagem se não houver NCs ativas -->
+        {% if ncs_responsavel|selectattr('status_nc', 'ne', 'Resolvida')|list|length == 0 %}
+        <div class="alert alert-success text-center">
+            <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+            <h5 class="mt-2">Nenhuma NC ativa!</h5>
+            <p class="mb-0 text-muted">Todas as suas NCs foram resolvidas.</p>
+        </div>
+        {% endif %}
+        </div>
+        
+        <!-- NCs Resolvidas -->
+        <div class="tab-pane fade" id="minhas-resolvidas" role="tabpanel">
+        <div class="row">
+            {% for item in ncs_responsavel %}
+            {% if item.status_nc == 'Resolvida' %}
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 border-success">
+                    <div class="card-header bg-success text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>
+                                {% if item.classificacao_nc == 'L' %}
+                                    🟢 NC Leve
+                                {% elif item.classificacao_nc == 'M' %}
+                                    🟡 NC Moderada
+                                {% elif item.classificacao_nc == 'G' %}
+                                    🔴 NC Grave
+                                {% endif %}
+                            </span>
+                            <span class="badge bg-light text-success">
+                                <i class="bi bi-check-circle-fill"></i> Resolvida
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">{{ item.item_template.secao }}</h6>
+                        <h5 class="card-title">{{ item.item_template.item_verificacao }}</h5>
+                        
+                        {% if item.data_resolucao %}
+                        <div class="alert alert-success py-2 mb-3">
+                            <i class="bi bi-calendar-check"></i> <strong>Resolvida em:</strong> {{ item.data_resolucao.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if item.motivo_fechamento %}
+                        <div class="alert alert-light py-2">
+                            <strong>Motivo do Fechamento:</strong><br>
+                            <small>{{ item.motivo_fechamento }}</small>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">
+                                <i class="bi bi-folder"></i> {{ item.checklist.projeto }}
+                            </small>
+                        </div>
+                        
+                        <!-- SEÇÃO DE CONVERSA / COMENTÁRIOS (apenas visualização) -->
+                        <div class="border rounded p-3 bg-light" style="max-height: 250px; overflow-y: auto;">
+                            <h6 class="mb-3"><i class="bi bi-chat-dots"></i> Histórico</h6>
+                            
+                            {% if item.comentarios %}
+                                {% for comentario in item.comentarios %}
+                                <div class="mb-2">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-2">
+                                            {% if comentario.usuario_id == item.checklist.criador_id %}
+                                                <span class="badge bg-primary" title="Auditor">👨‍💼</span>
+                                            {% elif comentario.usuario_id == item.responsavel_id %}
+                                                <span class="badge bg-success" title="Responsável">👷</span>
+                                            {% elif item.escalado_para_id and comentario.usuario_id == item.escalado_para_id %}
+                                                <span class="badge bg-warning" title="Superior">⭐</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">👤</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="bg-white border rounded p-2 {% if comentario.tipo_solicitacao %}border-info border-2{% endif %}">
+                                                <div class="d-flex justify-content-between">
+                                                    <strong class="text-primary">{{ comentario.usuario.nome }}</strong>
+                                                    <small class="text-muted">{{ comentario.data_criacao.strftime('%d/%m %H:%M') }}</small>
+                                                </div>
+                                                <p class="mb-0 mt-1 small">{{ comentario.comentario }}</p>
+                                                
+                                                <!-- Status de aprovação -->
+                                                {% if comentario.tipo_solicitacao %}
+                                                <div class="mt-2">
+                                                    {% if comentario.status_aprovacao == 'aprovado' %}
+                                                        <span class="badge bg-success">✅ Aprovado</span>
+                                                    {% elif comentario.status_aprovacao == 'rejeitado' %}
+                                                        <span class="badge bg-danger">❌ Rejeitado</span>
+                                                    {% elif comentario.status_aprovacao == 'cancelado' %}
+                                                        <span class="badge bg-secondary">⚠️ Cancelado</span>
+                                                    {% endif %}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted text-center mb-0 small">
+                                    <i class="bi bi-chat-left-text"></i> Nenhum comentário
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- Mensagem se não houver NCs resolvidas -->
+        {% if ncs_responsavel|selectattr('status_nc', 'equalto', 'Resolvida')|list|length == 0 %}
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle" style="font-size: 2rem;"></i>
+            <h5 class="mt-2">Nenhuma NC resolvida ainda</h5>
+            <p class="mb-0 text-muted">Suas NCs resolvidas aparecerão aqui.</p>
+        </div>
+        {% endif %}
+        </div>
+        </div>
+        
+        {% else %}
+        <div class="card text-center py-5">
+            <div class="card-body">
+                <i class="bi bi-check-circle" style="font-size: 4rem; color: #28a745;"></i>
+                <h3 class="mt-3">Nenhuma NC atribuída a você</h3>
+                <p class="text-muted">Você não possui não conformidades pendentes no momento</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- NCs Escaladas (como superior) -->
+    <div class="tab-pane fade" id="escaladas" role="tabpanel">
+        {% if ncs_escaladas %}
+        
+        <!-- Sub-abas para filtrar por status -->
+        <ul class="nav nav-pills mb-3" id="escaladasStatusTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="escaladas-ativas-tab" data-bs-toggle="tab" data-bs-target="#escaladas-ativas" type="button" role="tab">
+                    <i class="bi bi-exclamation-circle"></i> Ativas ({{ ncs_escaladas|selectattr('status_nc', 'ne', 'Resolvida')|list|length }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="escaladas-resolvidas-tab" data-bs-toggle="tab" data-bs-target="#escaladas-resolvidas" type="button" role="tab">
+                    <i class="bi bi-check-circle"></i> Resolvidas ({{ ncs_escaladas|selectattr('status_nc', 'equalto', 'Resolvida')|list|length }})
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="escaladasStatusTabContent">
+            <!-- NCs Escaladas Ativas -->
+            <div class="tab-pane fade show active" id="escaladas-ativas" role="tabpanel">
+        <div class="row">
+            {% for item in ncs_escaladas %}
+            {% if item.status_nc != 'Resolvida' %}
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 border-warning">
+                    <div class="card-header bg-warning">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="bi bi-arrow-up-circle"></i> NC Escalada
+                                ({% if item.classificacao_nc == 'L' %}🟢 Leve{% elif item.classificacao_nc == 'M' %}🟡 Moderada{% else %}🔴 Grave{% endif %})
+                            </span>
+                            <span class="badge bg-dark">
+                                {{ item.status_nc }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">{{ item.item_template.secao }}</h6>
+                        <h5 class="card-title">{{ item.item_template.item_verificacao }}</h5>
+                        
+                        <div class="alert alert-light py-2">
+                            <strong>Responsável Original:</strong> {{ item.responsavel.nome }}<br>
+                            <strong>Auditor:</strong> {{ item.checklist.criador.nome }}<br>
+                            <strong>Projeto:</strong> {{ item.checklist.projeto }}
+                        </div>
+                        
+                        {% if item.acao_corretiva %}
+                        <div class="alert alert-primary py-2">
+                            <strong><i class="bi bi-tools"></i> Ação Corretiva:</strong><br>
+                            {{ item.acao_corretiva }}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Alerta de escalamento pendente de aceite -->
+                        {% if not item.escalado_aceito %}
+                        <div class="alert alert-warning border-2 border-warning mb-3">
+                            <h6 class="mb-2"><i class="bi bi-exclamation-triangle-fill"></i> NC Escalada para Você</h6>
+                            <p class="mb-3 small">Esta NC foi escalada para você. Clique em "Ciente" para assumir a responsabilidade e ter acesso aos controles.</p>
+                            
+                            <button class="btn btn-success btn-sm" data-bs-toggle="collapse" data-bs-target="#aceitarEscalamento{{ item.id }}">
+                                <i class="bi bi-check-circle"></i> Ciente
+                            </button>
+                            
+                            <!-- Form de aceitar -->
+                            <div class="collapse mt-2" id="aceitarEscalamento{{ item.id }}">
+                                <form method="POST" action="{{ url_for('aprovacao.aceitar_escalamento', item_id=item.id) }}" class="border rounded p-2 bg-light">
+                                    <input type="hidden" name="acao" value="aceitar">
+                                    <textarea name="justificativa" class="form-control form-control-sm mb-2" rows="2" placeholder="Comentário (opcional)"></textarea>
+                                    <button type="submit" class="btn btn-success btn-sm w-100">Confirmar Ciência</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if item.get_prazo_limite() %}
+                        <p class="card-text">
+                            <strong>Prazo:</strong> {{ item.get_prazo_limite().strftime('%d/%m/%Y') }}
+                            {% set dias = item.dias_restantes() %}
+                            {% if dias is not none %}
+                                {% if dias < 0 %}
+                                    <span class="badge bg-danger">Atrasado {{ dias|abs }}d</span>
+                                {% elif dias <= 2 %}
+                                    <span class="badge bg-warning">{{ dias }}d</span>
+                                {% endif %}
+                            {% endif %}
+                        </p>
+                        {% endif %}
+                        
+                        <!-- SEÇÃO DE CONVERSA / COMENTÁRIOS -->
+                        <div class="border rounded p-3 bg-light mb-3" style="max-height: 300px; overflow-y: auto;">
+                            <h6 class="mb-3"><i class="bi bi-chat-dots"></i> Conversa sobre esta NC</h6>
+                            
+                            {% if item.comentarios %}
+                                {% for comentario in item.comentarios %}
+                                <div class="mb-2">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-2">
+                                            {% if comentario.usuario_id == item.checklist.criador_id %}
+                                                <span class="badge bg-primary" title="Auditor">👨‍💼</span>
+                                            {% elif comentario.usuario_id == item.responsavel_id %}
+                                                <span class="badge bg-success" title="Responsável">👷</span>
+                                            {% elif item.escalado_para_id and comentario.usuario_id == item.escalado_para_id %}
+                                                <span class="badge bg-warning" title="Superior">⭐</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">👤</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="bg-white border rounded p-2">
+                                                <div class="d-flex justify-content-between">
+                                                    <strong class="text-primary">{{ comentario.usuario.nome }}</strong>
+                                                    <small class="text-muted">{{ comentario.data_criacao.strftime('%d/%m %H:%M') }}</small>
+                                                </div>
+                                                <p class="mb-0 mt-1">{{ comentario.comentario }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted text-center mb-0">
+                                    <i class="bi bi-chat-left-text"></i> Nenhum comentário ainda
+                                </p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Formulário de comentário (desabilitado se escalamento não aceito) -->
+                        {% if item.status_nc != 'Resolvida' and item.escalado_aceito %}
+                        <form method="POST" action="{{ url_for('nc.comentar_item', item_id=item.id) }}" class="mb-2">
+                            <div class="input-group">
+                                <input type="text" name="comentario" class="form-control" placeholder="Digite seu comentário..." required>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </div>
+                        </form>
+                        {% endif %}
+                        
+                        <!-- Botões do SUPERIOR (propor prazo e fechar NC - COM aprovação) -->
+                        {% set tem_aprovacao_pendente_esc = item.comentarios|selectattr('tipo_solicitacao', 'ne', None)|selectattr('status_aprovacao', 'equalto', 'pendente')|list|length > 0 %}
+                        {% if item.escalado_aceito and current_user.id == item.escalado_para_id and item.status_nc != 'Resolvida' and not tem_aprovacao_pendente_esc %}
+                        <div class="d-flex flex-column gap-2 mb-2">
+                            <button class="btn btn-warning btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#proporPrazoEsc{{ item.id }}">
+                                <i class="bi bi-calendar-plus"></i> Propor Novo Prazo
+                            </button>
+                            
+                            <button class="btn btn-success btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#fecharNCEsc{{ item.id }}">
+                                <i class="bi bi-check-circle"></i> Fechar NC
+                            </button>
+                        </div>
+                        
+                        <!-- Formulário de propor prazo (SUPERIOR - COM aprovação) -->
+                        <div class="collapse mb-2" id="proporPrazoEsc{{ item.id }}">
+                            <form method="POST" action="{{ url_for('aprovacao.propor_prazo', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                <h6 class="fw-bold mb-2"><i class="bi bi-calendar-plus"></i> Propor Novo Prazo</h6>
+                                <div class="mb-2">
+                                    <label class="form-label fw-bold">Nova Data de Resolução *</label>
+                                    <input type="date" name="nova_data_resolucao" class="form-control" required>
+                                    <small class="text-muted">Prazo atual: {{ item.get_prazo_limite().strftime('%d/%m/%Y') if item.get_prazo_limite() else 'Não definido' }}</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Motivo *</label>
+                                    <textarea name="motivo_prazo" class="form-control" rows="2" placeholder="Explique o motivo da mudança de prazo..." required></textarea>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="bi bi-send"></i> Solicitar Aprovação
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#proporPrazoEsc{{ item.id }}">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Formulário de fechar NC (SUPERIOR - COM aprovação) -->
+                        <div class="collapse mb-2" id="fecharNCEsc{{ item.id }}">
+                            <form method="POST" action="{{ url_for('aprovacao.fechar_nc', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                <h6 class="fw-bold mb-2"><i class="bi bi-check-circle"></i> Fechar NC</h6>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Motivo do Fechamento *</label>
+                                    <textarea name="motivo_fechamento" class="form-control" rows="3" placeholder="Explique o motivo do fechamento desta NC..." required></textarea>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-send"></i> Solicitar Aprovação
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#fecharNCEsc{{ item.id }}">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        {% elif tem_aprovacao_pendente_esc %}
+                        <div class="alert alert-info text-center mb-0">
+                            <i class="bi bi-hourglass-split"></i> Aguardando aprovação do auditor
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Botões do AUDITOR (propor prazo e fechar NC - SEM aprovação) -->
+                        {% if current_user.id == item.checklist.criador_id and item.status_nc != 'Resolvida' %}
+                        <div class="d-flex flex-column gap-2 mb-2">
+                            <button class="btn btn-warning btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#proporPrazoAuditorEsc{{ item.id }}">
+                                <i class="bi bi-calendar-plus"></i> Propor Novo Prazo (Auditor)
+                            </button>
+                            
+                            <button class="btn btn-success btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#fecharNCAuditorEsc{{ item.id }}">
+                                <i class="bi bi-check-circle"></i> Fechar NC (Auditor)
+                            </button>
+                        </div>
+                        
+                        <!-- Formulário de propor prazo (AUDITOR - SEM aprovação) -->
+                        <div class="collapse mb-2" id="proporPrazoAuditorEsc{{ item.id }}">
+                            <form method="POST" action="{{ url_for('aprovacao.propor_prazo', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                <h6 class="fw-bold mb-2"><i class="bi bi-calendar-plus"></i> Propor Novo Prazo (Auditor)</h6>
+                                <div class="mb-2">
+                                    <label class="form-label fw-bold">Nova Data de Resolução *</label>
+                                    <input type="date" name="nova_data_resolucao" class="form-control" required>
+                                    <small class="text-muted">Prazo atual: {{ item.get_prazo_limite().strftime('%d/%m/%Y') if item.get_prazo_limite() else 'Não definido' }}</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Motivo (opcional)</label>
+                                    <textarea name="motivo_prazo" class="form-control" rows="2" placeholder="Explique o motivo da mudança de prazo..."></textarea>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="bi bi-calendar-check"></i> Confirmar Novo Prazo
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#proporPrazoAuditorEsc{{ item.id }}">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Formulário de fechar NC (AUDITOR - SEM aprovação) -->
+                        <div class="collapse mb-2" id="fecharNCAuditorEsc{{ item.id }}">
+                            <form method="POST" action="{{ url_for('aprovacao.fechar_nc', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                <h6 class="fw-bold mb-2"><i class="bi bi-check-circle"></i> Fechar NC (Auditor)</h6>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Motivo do Fechamento *</label>
+                                    <textarea name="motivo_fechamento" class="form-control" rows="3" placeholder="Explique o motivo do fechamento desta NC..." required></textarea>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-check-circle-fill"></i> Confirmar Fechamento
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#fecharNCAuditorEsc{{ item.id }}">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    </div>
+                    
+                    <div class="card-footer bg-white">
+                        {% if item.status_nc == 'Resolvida' %}
+                        <div class="text-center text-success">
+                            <i class="bi bi-check-circle-fill"></i> <strong>Fechada</strong>{% if item.data_resolucao %} em {{ item.data_resolucao.strftime('%d/%m/%Y') }}{% endif %}
+                            {% if item.motivo_fechamento %}
+                            <hr>
+                            <small><strong>Motivo:</strong> {{ item.motivo_fechamento }}</small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- Mensagem se não houver NCs escaladas ativas -->
+        {% if ncs_escaladas|selectattr('status_nc', 'ne', 'Resolvida')|list|length == 0 %}
+        <div class="alert alert-success text-center">
+            <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+            <h5 class="mt-2">Nenhuma NC escalada ativa!</h5>
+            <p class="mb-0 text-muted">Todas as NCs escaladas foram resolvidas.</p>
+        </div>
+        {% endif %}
+        </div>
+        
+        <!-- NCs Escaladas Resolvidas -->
+        <div class="tab-pane fade" id="escaladas-resolvidas" role="tabpanel">
+        <div class="row">
+            {% for item in ncs_escaladas %}
+            {% if item.status_nc == 'Resolvida' %}
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 border-success">
+                    <div class="card-header bg-success text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="bi bi-arrow-up-circle"></i> NC Escalada Resolvida
+                            </span>
+                            <span class="badge bg-light text-success">
+                                <i class="bi bi-check-circle-fill"></i> Resolvida
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">{{ item.item_template.secao }}</h6>
+                        <h5 class="card-title">{{ item.item_template.item_verificacao }}</h5>
+                        
+                        <div class="alert alert-light py-2 mb-2">
+                            <strong>Responsável Original:</strong> {{ item.responsavel.nome }}<br>
+                            <strong>Auditor:</strong> {{ item.checklist.criador.nome }}<br>
+                            <strong>Projeto:</strong> {{ item.checklist.projeto }}
+                        </div>
+                        
+                        {% if item.data_resolucao %}
+                        <div class="alert alert-success py-2 mb-2">
+                            <i class="bi bi-calendar-check"></i> <strong>Resolvida em:</strong> {{ item.data_resolucao.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if item.motivo_fechamento %}
+                        <div class="alert alert-light py-2">
+                            <strong>Motivo do Fechamento:</strong><br>
+                            <small>{{ item.motivo_fechamento }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- Mensagem se não houver NCs escaladas resolvidas -->
+        {% if ncs_escaladas|selectattr('status_nc', 'equalto', 'Resolvida')|list|length == 0 %}
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle" style="font-size: 2rem;"></i>
+            <h5 class="mt-2">Nenhuma NC escalada resolvida ainda</h5>
+            <p class="mb-0 text-muted">NCs escaladas resolvidas aparecerão aqui.</p>
+        </div>
+        {% endif %}
+        </div>
+        </div>
+        
+        {% else %}
+        <div class="card text-center py-5">
+            <div class="card-body">
+                <i class="bi bi-inbox" style="font-size: 4rem; color: #999;"></i>
+                <h3 class="mt-3">Nenhuma NC escalada para você</h3>
+                <p class="text-muted">Não há não conformidades aguardando sua aprovação</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Aba: Aguardando Minha Aprovação (apenas para auditores) -->
+    <div class="tab-pane fade" id="aprovacoes" role="tabpanel">
+        {% if aprovacoes_pendentes %}
+        
+        <!-- Solicitações de Aprovação (como auditor) -->
+        <h4 class="mb-3"><i class="bi bi-clipboard-check text-primary"></i> Solicitações Aguardando Sua Aprovação ({{ aprovacoes_pendentes|length }})</h4>
+        
+        <div class="row">
+            {% for comentario in aprovacoes_pendentes %}
+            {% set item = comentario.item %}
+            <div class="col-lg-6 mb-3">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="bi bi-hourglass-split"></i> 
+                                {% if comentario.tipo_solicitacao == 'novo_prazo' %}
+                                    Alteração de Prazo
+                                {% elif comentario.tipo_solicitacao == 'resolver_nc' %}
+                                    Marcar como Resolvida
+                                {% elif comentario.tipo_solicitacao == 'fechar_nc' %}
+                                    Fechamento de NC
+                                {% endif %}
+                            </span>
+                            <span class="badge bg-warning text-dark">Pendente</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="text-muted">NC #{{ item.item_template.ordem }} - {{ item.item_template.secao }}</h6>
+                        <h5 class="mb-3">{{ item.item_template.item_verificacao }}</h5>
+                        
+                        <div class="alert alert-light py-2 mb-3">
+                            <strong>Projeto:</strong> {{ item.checklist.projeto }}<br>
+                            <strong>Responsável:</strong> {{ item.responsavel.nome }}<br>
+                            <strong>Solicitante:</strong> {{ comentario.usuario.nome }}<br>
+                            <strong>Data da Solicitação:</strong> {{ comentario.data_criacao.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                        
+                        <div class="alert alert-info py-2 mb-3">
+                            <strong>Solicitação:</strong><br>
+                            {{ comentario.comentario }}
+                            
+                            {% if comentario.tipo_solicitacao == 'novo_prazo' and comentario.nova_data_proposta %}
+                            <hr class="my-2">
+                            <strong>Novo Prazo Proposto:</strong> {{ comentario.nova_data_proposta.strftime('%d/%m/%Y') }}<br>
+                            <small class="text-muted">Prazo atual: {{ item.get_prazo_limite().strftime('%d/%m/%Y') if item.get_prazo_limite() else 'Não definido' }}</small>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm" data-bs-toggle="collapse" data-bs-target="#aprovarComent{{ comentario.id }}">
+                                <i class="bi bi-check-circle"></i> Aprovar
+                            </button>
+                            <button class="btn btn-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#rejeitarComent{{ comentario.id }}">
+                                <i class="bi bi-x-circle"></i> Rejeitar
+                            </button>
+                        </div>
+                        
+                        <!-- Form de aprovar -->
+                        <div class="collapse mt-3" id="aprovarComent{{ comentario.id }}">
+                            <form method="POST" action="{{ url_for('aprovacao.aprovar_solicitacao', comentario_id=comentario.id) }}" class="border rounded p-3 bg-light">
+                                <input type="hidden" name="acao" value="aprovar">
+                                <label class="form-label fw-bold">Justificativa (opcional)</label>
+                                <textarea name="justificativa" class="form-control mb-2" rows="2" placeholder="Adicione uma justificativa para a aprovação..."></textarea>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-check-circle-fill"></i> Confirmar Aprovação
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#aprovarComent{{ comentario.id }}">Cancelar</button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Form de rejeitar -->
+                        <div class="collapse mt-3" id="rejeitarComent{{ comentario.id }}">
+                            <form method="POST" action="{{ url_for('aprovacao.aprovar_solicitacao', comentario_id=comentario.id) }}" class="border rounded p-3 bg-light">
+                                <input type="hidden" name="acao" value="rejeitar">
+                                <label class="form-label fw-bold">Motivo da rejeição</label>
+                                <textarea name="justificativa" class="form-control mb-2" rows="2" placeholder="Explique o motivo da rejeição..." required></textarea>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="bi bi-x-circle-fill"></i> Confirmar Rejeição
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#rejeitarComent{{ comentario.id }}">Cancelar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% else %}
+        <div class="card text-center py-5">
+            <div class="card-body">
+                <i class="bi bi-check-circle" style="font-size: 4rem; color: #28a745;"></i>
+                <h3 class="mt-3">Tudo em dia!</h3>
+                <p class="text-muted">Não há aprovações pendentes no momento.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .chat-bubble {
+        transition: all 0.2s;
+    }
+    .chat-bubble:hover {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}

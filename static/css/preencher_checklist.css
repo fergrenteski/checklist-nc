@@ -1,0 +1,7 @@
+/* Preencher Checklist CSS - Estilos para preenchimento de checklist */
+
+.border-bottom:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+}

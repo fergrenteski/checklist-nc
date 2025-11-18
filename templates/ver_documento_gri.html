@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}Modelo de Plano de Gestão de Riscos - GRI / MPS.BR{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                <strong>Modelo de Referência:</strong> Use este documento como base para elaborar o Plano de Gestão de Riscos do seu projeto. 
+                Os textos em <span style="color: #0d6efd; font-weight: 500;">azul</span> indicam instruções de preenchimento.
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <div id="gri-content">
+                        <h1>Plano de Gestão de Riscos – Modelo GRI / MPS.BR</h1>
+                        
+                        <blockquote>
+                            <strong>Objetivo:</strong> Registrar de forma estruturada a identificação, análise, tratamento e monitoramento de riscos do projeto, alinhado às práticas de Gerência de Riscos (GRI) do MPS.BR.
+                        </blockquote>
+
+                        <hr>
+
+                        <h2>1. Identificação do Projeto</h2>
+                        <ul>
+                            <li><strong>Nome do projeto:</strong> <span class="instruction">Incluir o nome completo do projeto</span></li>
+                            <li><strong>Responsável pelo projeto:</strong> <span class="instruction">Incluir nome completo e cargo do responsável pelo projeto</span></li>
+                            <li><strong>Gestor de riscos:</strong> <span class="instruction">Incluir nome completo e cargo do gestor de riscos</span></li>
+                            <li><strong>Data de elaboração do plano:</strong> <span class="instruction">Incluir a data de criação deste documento no formato DD/MM/AAAA</span></li>
+                            <li><strong>Versão do documento:</strong> <span class="instruction">Incluir a versão do documento, ex: v1.0, v1.1, v2.0</span></li>
+                        </ul>
+
+                        <hr>
+
+                        <h2>2. Contexto e Escopo de Riscos</h2>
+                        
+                        <h3>1. Objetivos do projeto</h3>
+                        <p>Descrever os principais objetivos do projeto.</p>
+                        <p><span class="instruction">Incluir descrição dos objetivos principais, metas e resultados esperados do projeto</span></p>
+
+                        <h3>2. Escopo da gestão de riscos</h3>
+                        <p>Descrever quais áreas/entregas/processos estão cobertos pelo plano de riscos.</p>
+                        <p><span class="instruction">Incluir quais fases, processos, áreas ou entregas do projeto estão cobertas pela gestão de riscos</span></p>
+
+                        <h3>3. Partes interessadas relevantes para riscos</h3>
+                        <p>Listar stakeholders críticos (patrocinador, cliente, equipes, fornecedores etc.).</p>
+                        <p><span class="instruction">Incluir lista de stakeholders relevantes: patrocinador, cliente, equipes, fornecedores, órgãos reguladores, etc.</span></p>
+
+                        <h3>4. Critérios de aceitabilidade de riscos</h3>
+                        <p>Descrever como será definido se um risco é aceitável ou não (por exemplo, matriz Probabilidade x Impacto, limites de exposição etc.).</p>
+                        <p><span class="instruction">Incluir critérios para aceitar ou rejeitar riscos, como faixas de P x I aceitáveis, limites de exposição financeira, etc.</span></p>
+
+                        <hr>
+
+                        <h2>3. Registro de Riscos (Risk Register)</h2>
+                        
+                        <blockquote>Preencha uma linha por risco identificado.</blockquote>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Descrição do Risco</th>
+                                        <th>Categoria</th>
+                                        <th>Causa Raiz</th>
+                                        <th>Evento de Risco</th>
+                                        <th>Consequências</th>
+                                        <th>Probabilidade (1-5)</th>
+                                        <th>Impacto (1-5)</th>
+                                        <th>Nível (P x I)</th>
+                                        <th>Responsável</th>
+                                        <th>Estratégia de Resposta</th>
+                                        <th>Ações Planejadas</th>
+                                        <th>Prazo</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="instruction">ID do risco, ex: R1, R2</span></td>
+                                        <td><span class="instruction">Descrição clara e objetiva do risco</span></td>
+                                        <td><span class="instruction">Categoria do risco: Técnico, Prazo, Custo, Qualidade, RH, Fornecedor, Legal, Segurança, etc.</span></td>
+                                        <td><span class="instruction">Causa raiz que pode originar o risco</span></td>
+                                        <td><span class="instruction">Evento específico que caracteriza o risco se materializado</span></td>
+                                        <td><span class="instruction">Impactos e consequências se o risco ocorrer</span></td>
+                                        <td><span class="instruction">Número de 1 a 5</span></td>
+                                        <td><span class="instruction">Número de 1 a 5</span></td>
+                                        <td><span class="instruction">Multiplicação P x I</span></td>
+                                        <td><span class="instruction">Nome do responsável pelo risco</span></td>
+                                        <td><span class="instruction">Evitar, Mitigar, Transferir, Aceitar, etc.</span></td>
+                                        <td><span class="instruction">Ações planejadas para tratar o risco</span></td>
+                                        <td><span class="instruction">Data limite para ação, formato DD/MM/AAAA</span></td>
+                                        <td><span class="instruction">Status: Em análise, Planejado, Em andamento, Concluído, etc.</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p><strong>Categorias sugeridas:</strong> Técnico, Prazo, Custo, Qualidade, Recursos Humanos, Fornecedor, Legal/Regulatório, Segurança, Imagem/Reputação, Outros.</p>
+
+                        <hr>
+
+                        <h2>4. Análise e Priorização de Riscos</h2>
+
+                        <h3>1. Escala de probabilidade</h3>
+                        <ul>
+                            <li>1 – Muito Baixa</li>
+                            <li>2 – Baixa</li>
+                            <li>3 – Média</li>
+                            <li>4 – Alta</li>
+                            <li>5 – Muito Alta</li>
+                        </ul>
+
+                        <h3>2. Escala de impacto</h3>
+                        <ul>
+                            <li>1 – Impacto desprezível</li>
+                            <li>2 – Impacto baixo</li>
+                            <li>3 – Impacto moderado</li>
+                            <li>4 – Impacto alto</li>
+                            <li>5 – Impacto crítico</li>
+                        </ul>
+
+                        <h3>3. Critérios de priorização</h3>
+                        <p>Definir faixas, por exemplo:</p>
+                        <ul>
+                            <li>1 a 5 – Baixa prioridade</li>
+                            <li>6 a 10 – Média prioridade</li>
+                            <li>11 a 15 – Alta prioridade</li>
+                            <li>16 a 25 – Muito alta prioridade</li>
+                        </ul>
+
+                        <h3>4. Lista de riscos críticos (Top N)</h3>
+                        <p>Riscos com maior Nível (P x I) ou considerados estratégicos.</p>
+                        <p><span class="instruction">Incluir lista dos riscos mais críticos identificados, ex: R1 (P x I = 20), R5 (P x I = 16), R3 (P x I = 15)</span></p>
+
+                        <hr>
+
+                        <h2>5. Planejamento das Respostas aos Riscos</h2>
+
+                        <p>Para cada risco relevante, documentar:</p>
+
+                        <ul>
+                            <li><strong>ID do risco:</strong> <span class="instruction">Incluir ID do risco conforme tabela da seção 3, ex: R1, R2, R3</span></li>
+                            <li><strong>Estratégia de resposta:</strong> (Evitar, Mitigar, Transferir, Aceitar, Explorar, Compartilhar, Melhorar – conforme aplicável)
+                                <br><span class="instruction">Incluir a estratégia escolhida: Evitar, Mitigar, Transferir, Aceitar, etc.</span>
+                            </li>
+                            <li><strong>Ações de resposta ao risco:</strong>
+                                <br><span class="instruction">Incluir descrição detalhada das ações que serão tomadas para tratar o risco</span>
+                            </li>
+                            <li><strong>Responsável pela ação:</strong>
+                                <br><span class="instruction">Incluir nome completo e cargo do responsável por executar as ações de resposta</span>
+                            </li>
+                            <li><strong>Recursos necessários:</strong>
+                                <br><span class="instruction">Incluir recursos necessários: pessoas, orçamento, ferramentas, tempo, apoio de áreas, etc.</span>
+                            </li>
+                            <li><strong>Prazo para implementação:</strong>
+                                <br><span class="instruction">Incluir data limite para implementação das ações no formato DD/MM/AAAA</span>
+                            </li>
+                            <li><strong>Critério de sucesso / Indicador:</strong>
+                                <br><span class="instruction">Incluir como será medido o sucesso das ações, quais indicadores ou critérios serão usados</span>
+                            </li>
+                        </ul>
+
+                        <hr>
+
+                        <h2>6. Monitoramento e Controle de Riscos</h2>
+
+                        <h3>1. Mecanismos de monitoramento</h3>
+                        <p>Reuniões periódicas de acompanhamento (frequência, participantes).<br>
+                        Atualização do registro de riscos (responsável, periodicidade).</p>
+                        <p><span class="instruction">Incluir frequência das reuniões de acompanhamento, participantes, responsável pela atualização do registro e periodicidade</span></p>
+
+                        <h3>2. Indicadores de desempenho de riscos</h3>
+                        <p>Ex.: número de riscos novos por período, número de riscos críticos, riscos materializados, ações atrasadas etc.</p>
+                        <p><span class="instruction">Incluir indicadores que serão monitorados: quantidade de riscos novos, críticos, materializados, ações em atraso, etc.</span></p>
+
+                        <h3>3. Tratamento de riscos materializados (issues)</h3>
+                        <p>Como serão registrados e tratados os riscos que se concretizarem.</p>
+                        <p><span class="instruction">Incluir processo para registrar e tratar riscos que se materializarem: onde registrar, quem é responsável, como acompanhar até resolução</span></p>
+
+                        <h3>4. Processo de escalonamento</h3>
+                        <p>Critérios e fluxo para escalar riscos ao nível gerencial superior.</p>
+                        <p><span class="instruction">Incluir critérios para escalonamento (ex: P x I acima de X, impacto em escopo/prazo/custo) e para quem escalonar</span></p>
+
+                        <hr>
+
+                        <h2>7. Comunicação e Registro de Riscos</h2>
+
+                        <h3>1. Plano de comunicação de riscos</h3>
+                        <p>Quem recebe quais informações de risco, em qual formato e com qual frequência.</p>
+                        <p><span class="instruction">Incluir quem recebe informações (diretoria, equipe, cliente), formato (relatório, e-mail, apresentação) e frequência (semanal, mensal, imediato)</span></p>
+
+                        <h3>2. Repositório de registros de risco</h3>
+                        <p>Onde o registro de riscos será armazenado (ferramenta, pasta, sistema) e quem tem acesso.</p>
+                        <p><span class="instruction">Incluir local de armazenamento (SharePoint, pasta compartilhada, sistema específico) e quem tem acesso</span></p>
+
+                        <h3>3. Rastreabilidade e histórico</h3>
+                        <p>Como serão mantidos históricos de revisões, decisões e ações tomadas.</p>
+                        <p><span class="instruction">Incluir como será feito controle de versões, registro de decisões e histórico de alterações</span></p>
+
+                        <hr>
+
+                        <h2>8. Revisão e Melhoria Contínua</h2>
+
+                        <h3>1. Periodicidade de revisão do plano de riscos</h3>
+                        <p>Ex.: mensal, a cada marco principal, ou quando ocorrer mudanças significativas no projeto.</p>
+                        <p><span class="instruction">Incluir frequência de revisão: mensal, a cada marco, quando houver mudança relevante no projeto</span></p>
+
+                        <h3>2. Lições aprendidas relacionadas a riscos</h3>
+                        <p>Como serão coletadas e registradas as lições aprendidas.</p>
+                        <p><span class="instruction">Incluir como e quando as lições aprendidas serão coletadas e onde serão registradas</span></p>
+
+                        <h3>3. Atualização de políticas e procedimentos</h3>
+                        <p>Como as lições aprendidas serão incorporadas em políticas, procedimentos e checklists futuros.</p>
+                        <p><span class="instruction">Incluir processo para incorporar lições aprendidas em políticas, procedimentos e templates futuros</span></p>
+
+                        <hr>
+
+                        <h2>9. Aprovações</h2>
+
+                        <ul>
+                            <li><strong>Responsável pela gestão de riscos:</strong>
+                                <ul>
+                                    <li>Nome: <span class="instruction">Incluir nome completo do responsável pela gestão de riscos</span></li>
+                                    <li>Assinatura: <span class="instruction">Incluir assinatura do responsável pela gestão de riscos</span></li>
+                                    <li>Data: <span class="instruction">Incluir data da assinatura no formato DD/MM/AAAA</span></li>
+                                </ul>
+                            </li>
+                            <li><strong>Gerente do projeto / Patrocinador:</strong>
+                                <ul>
+                                    <li>Nome: <span class="instruction">Incluir nome completo do gerente do projeto ou patrocinador</span></li>
+                                    <li>Assinatura: <span class="instruction">Incluir assinatura do gerente do projeto ou patrocinador</span></li>
+                                    <li>Data: <span class="instruction">Incluir data da assinatura no formato DD/MM/AAAA</span></li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                        <hr>
+
+                        <blockquote>
+                            <strong>Observação:</strong> Este modelo pode ser adaptado conforme o porte do projeto e o nível de formalidade exigido pela organização, mantendo sempre o alinhamento às práticas de Gerência de Riscos (GRI) do MPS.BR.
+                        </blockquote>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 mb-4">
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+#gri-content {
+    font-size: 1rem;
+    line-height: 1.8;
+}
+
+#gri-content h1 {
+    color: #0d6efd;
+    border-bottom: 3px solid #0d6efd;
+    padding-bottom: 10px;
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+#gri-content h2 {
+    color: #0d6efd;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+#gri-content h3 {
+    color: #495057;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+}
+
+#gri-content table {
+    width: 100%;
+    margin: 20px 0;
+    border-collapse: collapse;
+}
+
+#gri-content table th,
+#gri-content table td {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+#gri-content table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+#gri-content blockquote {
+    border-left: 4px solid #0d6efd;
+    padding-left: 15px;
+    color: #6c757d;
+    font-style: italic;
+    margin: 20px 0;
+}
+
+#gri-content hr {
+    margin: 30px 0;
+    border-top: 2px solid #dee2e6;
+}
+
+#gri-content .instruction {
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+#gri-content ul {
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+#gri-content li {
+    margin-bottom: 8px;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Checklists - Sistema NC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1><i class="bi bi-clipboard-data"></i> Meus Checklists</h1>
+            <a href="{{ url_for('checklist.novo') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Novo Checklist
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if checklists %}
+    <div class="row">
+        {% for checklist in checklists %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-file-earmark-text"></i> {{ checklist.projeto }}
+                    </h5>
+                    {% if checklist.descricao %}
+                    <p class="card-text text-muted">{{ checklist.descricao[:100] }}{% if checklist.descricao|length > 100 %}...{% endif %}</p>
+                    {% endif %}
+                    
+                    <div class="mb-1">
+                        <small class="text-muted">
+                            <i class="bi bi-calendar"></i> 
+                            Criado em: {{ (checklist.data_criacao|brasilia).strftime('%d/%m/%Y %H:%M') }}
+                        </small>
+                    </div>
+
+                    <div class="mb-1">
+                        <small class="text-muted">
+                            <i class="bi bi-person"></i> 
+                            Criado por: {{ checklist.criador.nome }}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-block justify-content-between align-items-center mb-2">
+                            <div class="mb-3">
+                                <a href="{{ url_for('main.ver_documento_gri') }}" class="btn btn-link p-0" style="font-size: 0.9rem;">
+                                    Ver modelo de Plano de Gestão de Riscos (GRI / MPS.BR)
+                                </a>
+                            </div>
+                            <span class="fw-bold">Aderência:</span>
+                            <span class="badge bg-primary fs-6">{{ checklist.calcular_aderencia() }}%</span>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            {% set aderencia = checklist.calcular_aderencia() %}
+                            <div class="progress-bar 
+                                {% if aderencia >= 80 %}bg-success
+                                {% elif aderencia >= 60 %}bg-warning
+                                {% else %}bg-danger{% endif %}" 
+                                role="progressbar" 
+                                style="width: {{ aderencia }}%">
+                                {{ aderencia }}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-list-check"></i> {{ checklist.itens|length }} itens
+                        </span>
+                        {% set ncs = checklist.contar_ncs_por_classificacao() %}
+                        <span class="badge bg-danger">
+                            <i class="bi bi-exclamation-triangle"></i> {{ ncs.total }} NCs
+                        </span>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex flex-column flex-sm-row gap-2">
+                        <a href="{{ url_for('checklist.ver', checklist_id=checklist.id) }}" 
+                           class="btn btn-sm btn-outline-primary flex-fill">
+                            <i class="bi bi-eye"></i> Ver
+                        </a>
+                        <form action="{{ url_for('checklist.deletar', checklist_id=checklist.id) }}" 
+                              method="POST" 
+                              onsubmit="return confirm('Tem certeza que deseja deletar este checklist?');"
+                              class="flex-fill">
+                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                <i class="bi bi-trash"></i> Deletar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card text-center py-5">
+                <div class="card-body">
+                    <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+                    <h3 class="mt-3">Nenhum checklist criado ainda</h3>
+                    <p class="text-muted">Comece criando seu primeiro checklist de não conformidades</p>
+                    <a href="{{ url_for('checklist.novo') }}" class="btn btn-primary mt-3">
+                        <i class="bi bi-plus-circle"></i> Criar Primeiro Checklist
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

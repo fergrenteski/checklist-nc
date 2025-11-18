@@ -1,0 +1,726 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ver_checklist.css') }}">
+{% endblock %}
+
+{% block title %}{{ checklist.projeto }} - Sistema NC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="bi bi-clipboard-check"></i> {{ checklist.projeto }}</h1>
+                <p class="text-muted">
+                    <i class="bi bi-file-text"></i> {{ checklist.template.nome }}
+                </p>
+                <small class="text-muted">
+                    <i class="bi bi-calendar"></i> Criado em: {{ (checklist.data_criacao|brasilia).strftime('%d/%m/%Y %H:%M') }}
+                    por {{ checklist.criador.nome }}
+                </small>
+            </div>
+            <div>
+                {% if checklist.criador_id == current_user.id %}
+                <a href="{{ url_for('preencher.preencher_checklist', checklist_id=checklist.id) }}" class="btn btn-warning">
+                    <i class="bi bi-pencil"></i> Editar Respostas
+                </a>
+                {% endif %}
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estatísticas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        {% if aderencia < 50 %}
+        <div class="card stat-card" style="border-left-color: #dc3545;">
+            <div class="card-body">
+                <h6 class="card-title text-muted">ADERÊNCIA</h6>
+                <h2 class="mb-0 text-danger">{{ aderencia }}%</h2>
+            </div>
+        </div>
+        {% elif aderencia < 60 %}
+        <div class="card stat-card" style="border-left-color: #fd7e14;">
+            <div class="card-body">
+                <h6 class="card-title text-muted">ADERÊNCIA</h6>
+                <h2 class="mb-0" style="color: #fd7e14;">{{ aderencia }}%</h2>
+            </div>
+        </div>
+        {% elif aderencia >= 80 %}
+        <div class="card stat-card" style="border-left-color: #198754;">
+            <div class="card-body">
+                <h6 class="card-title text-muted">ADERÊNCIA</h6>
+                <h2 class="mb-0 text-success">{{ aderencia }}%</h2>
+            </div>
+        </div>
+        {% else %}
+        <div class="card stat-card" style="border-left-color: #ffc107;">
+            <div class="card-body">
+                <h6 class="card-title text-muted">ADERÊNCIA</h6>
+                <h2 class="mb-0 text-warning">{{ aderencia }}%</h2>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card leve">
+            <div class="card-body">
+                <h6 class="card-title text-muted">NC Leves</h6>
+                <h2 class="mb-0 text-warning">{{ ncs.leve }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card moderada">
+            <div class="card-body">
+                <h6 class="card-title text-muted">NC Moderadas</h6>
+                <h2 class="mb-0 text-orange">{{ ncs.moderada }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card grave">
+            <div class="card-body">
+                <h6 class="card-title text-muted">NC Graves</h6>
+                <h2 class="mb-0 text-danger">{{ ncs.grave }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Lista de Itens -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Itens do Checklist
+                    <span class="badge bg-secondary">{{ checklist.itens|length }}</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if checklist.itens %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Seção</th>
+                                <th>Item de Verificação</th>
+                                <th>Critério</th>
+                                <th>Resultado</th>
+                                <th>Classificação NC</th>
+                                <th>Responsável</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in checklist.itens|sort(attribute='item_template.ordem') %}
+                            <tr>
+                                <td data-label="#"><strong>{{ item.item_template.ordem }}</strong></td>
+                                <td data-label="Seção">{{ item.item_template.secao }}</td>
+                                <td data-label="Item de Verificação">{{ item.item_template.item_verificacao }}</td>
+                                <td data-label="Critério">
+                                    <small>{{ item.item_template.criterio_conformidade[:50] }}
+                                    {% if item.item_template.criterio_conformidade|length > 50 %}...{% endif %}</small>
+                                </td>
+                                <td data-label="Resultado">
+                                    {% if item.resultado == 'Conforme' %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> Conforme
+                                        </span>
+                                    {% elif item.resultado == 'Não Conforme' %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle"></i> NC
+                                        </span>
+                                    {% elif item.resultado == 'N/A' %}
+                                        <span class="badge bg-secondary">N/A</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pendente</span>
+                                    {% endif %}
+                                </td>
+                                <td data-label="Classificação NC">
+                                    {% if item.classificacao_nc == 'L' %}
+                                        <span class="badge badge-leve">🟢 Leve</span>
+                                    {% elif item.classificacao_nc == 'M' %}
+                                        <span class="badge badge-moderada">🟡 Moderada</span>
+                                    {% elif item.classificacao_nc == 'G' %}
+                                        <span class="badge badge-grave">🔴 Grave</span>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td data-label="Responsável">
+                                    {% if item.responsavel %}
+                                        {{ item.responsavel.nome }}
+                                        {% if item.escalado %}
+                                        <br><small class="text-info">
+                                            <i class="bi bi-arrow-up-circle"></i> Escalado para: {{ item.escalado_para.nome }}
+                                        </small>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td data-label="Status">
+                                    {% if item.resultado == 'Conforme' %}
+                                        -
+                                    {% elif item.status_nc %}
+                                        {% if item.status_nc == 'Pendente' %}
+                                            <span class="badge bg-warning">Pendente</span>
+                                        {% elif item.status_nc == 'Em Andamento' %}
+                                            <span class="badge bg-info">Em Andamento</span>
+                                        {% elif item.status_nc == 'Resolvida' %}
+                                            <span class="badge bg-success">Resolvida</span>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td data-label="Ações">
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" 
+                                                class="btn btn-info btn-action" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#detalhesModal{{ item.id }}">
+                                            <i class="bi bi-eye"></i> <span class="d-none d-md-inline">Detalhes</span>
+                                        </button>
+                                        {% if item.resultado == 'Não Conforme' and checklist.criador_id == current_user.id and not item.escalado and item.status_nc != 'Resolvida' %}
+                                        <!-- Botão que abre modal de confirmação para escalonamento -->
+                                        <button type="button" 
+                                                class="btn btn-warning btn-action btn-escalar"
+                                                title="Escalar NC"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#confirmEscalaModal"
+                                                data-item-id="{{ item.id }}"
+                                                data-item-order="{{ item.item_template.ordem }}"
+                                                data-item-title="{{ item.item_template.item_verificacao|e }}">
+                                            <i class="bi bi-arrow-up-circle"></i> <span class="d-none d-md-inline">Escalar</span>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Modais de Detalhes (fora da tabela) -->
+                {% for item in checklist.itens|sort(attribute='item_template.ordem') %}
+                <div class="modal fade" id="detalhesModal{{ item.id }}" tabindex="-1">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Detalhes do Item #{{ item.item_template.ordem }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                            </div>
+                            <div class="modal-body">
+                                <dl class="row">
+                                    <dt class="col-sm-4">Seção:</dt>
+                                    <dd class="col-sm-8">{{ item.item_template.secao }}</dd>
+                                    
+                                    <dt class="col-sm-4">Item de Verificação:</dt>
+                                    <dd class="col-sm-8">{{ item.item_template.item_verificacao }}</dd>
+                                    
+                                    <dt class="col-sm-4">Critério de Conformidade:</dt>
+                                    <dd class="col-sm-8">{{ item.item_template.criterio_conformidade }}</dd>
+                                    
+                                    <dt class="col-sm-4">Resultado:</dt>
+                                    <dd class="col-sm-8">
+                                        {% if item.resultado %}{{ item.resultado }}{% else %}Não preenchido{% endif %}
+                                    </dd>
+                                    
+                                    {% if item.observacao %}
+                                    <dt class="col-sm-4">Observação:</dt>
+                                    <dd class="col-sm-8">{{ item.observacao }}</dd>
+                                    {% endif %}
+                                    
+                                    {% if item.responsavel %}
+                                    <dt class="col-sm-4">Responsável:</dt>
+                                    <dd class="col-sm-8">{{ item.responsavel.nome }} ({{ item.responsavel.funcao }})</dd>
+                                    {% endif %}
+                                    
+                                    {% if item.classificacao_nc %}
+                                    <dt class="col-sm-4">Classificação NC:</dt>
+                                    <dd class="col-sm-8">
+                                        {% if item.classificacao_nc == 'L' %}🟢 Leve (5 dias)
+                                        {% elif item.classificacao_nc == 'M' %}🟡 Moderada (3 dias)
+                                        {% elif item.classificacao_nc == 'G' %}🔴 Grave (2 dias)
+                                        {% endif %}
+                                    </dd>
+                                    {% endif %}
+                                    
+                                    {% if item.acao_corretiva %}
+                                    <dt class="col-sm-4">Ação Corretiva:</dt>
+                                    <dd class="col-sm-8">{{ item.acao_corretiva }}</dd>
+                                    {% endif %}
+                                    
+                                    {% if item.get_prazo_limite() %}
+                                    <dt class="col-sm-4">Prazo de Resolução:</dt>
+                                    <dd class="col-sm-8">
+                                        {{ item.get_prazo_limite().strftime('%d/%m/%Y') }}
+                                        {% set dias = item.dias_restantes() %}
+                                        {% if dias is not none %}
+                                            {% if dias < 0 %}
+                                                <span class="badge bg-danger">Atrasado {{ dias|abs }} dia(s)</span>
+                                            {% elif dias == 0 %}
+                                                <span class="badge bg-warning">Vence hoje</span>
+                                            {% else %}
+                                                <span class="badge bg-info">{{ dias }} dia(s) restantes</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </dd>
+                                    {% endif %}
+                                    
+                                    {% if item.escalado %}
+                                    <dt class="col-sm-4">Escalado para:</dt>
+                                    <dd class="col-sm-8">{{ item.escalado_para.nome }}</dd>
+                                    {% endif %}
+                                    
+                                    {% if item.resultado == 'Não Conforme' %}
+                                    <dt class="col-sm-4">Status da NC:</dt>
+                                    <dd class="col-sm-8">
+                                        {% if item.status_nc == 'Pendente' %}
+                                            <span class="badge bg-secondary">⏳ Pendente</span>
+                                        {% elif item.status_nc == 'Em Andamento' %}
+                                            <span class="badge bg-primary">🔄 Em Andamento</span>
+                                        {% elif item.status_nc == 'Resolvida' %}
+                                            <span class="badge bg-success">✅ Resolvida</span>
+                                        {% endif %}
+                                    </dd>
+                                    {% endif %}
+                                    
+                                    {% if item.data_resolucao %}
+                                    <dt class="col-sm-4">Data de Resolução:</dt>
+                                    <dd class="col-sm-8">{{ (item.data_resolucao|brasilia).strftime('%d/%m/%Y %H:%M') }}</dd>
+                                    {% endif %}
+                                    
+                                    {% if item.motivo_fechamento %}
+                                    <dt class="col-sm-4">Motivo do Fechamento:</dt>
+                                    <dd class="col-sm-8">{{ item.motivo_fechamento }}</dd>
+                                    {% endif %}
+                                </dl>
+                                
+                                <!-- Alerta de escalamento pendente de aceite (para superior) -->
+                                {% if item.escalado and not item.escalado_aceito and current_user.id == item.escalado_para_id %}
+                                <div class="alert alert-warning border-2 border-warning mb-3">
+                                    <h6 class="mb-2"><i class="bi bi-exclamation-triangle-fill"></i> NC Escalada para Você</h6>
+                                    <p class="mb-3 small">Esta NC foi escalada para você por <strong>{{ item.responsavel.nome }}</strong>. Clique em "Ciente" para assumir a responsabilidade e ter acesso aos controles.</p>
+                                    
+                                    <button class="btn btn-success btn-sm" data-bs-toggle="collapse" data-bs-target="#aceitarEscalamentoModal{{ item.id }}">
+                                        <i class="bi bi-check-circle"></i> Ciente
+                                    </button>
+                                    
+                                    <!-- Form de aceitar -->
+                                    <div class="collapse mt-2" id="aceitarEscalamentoModal{{ item.id }}">
+                                        <form method="POST" action="{{ url_for('aprovacao.aceitar_escalamento', item_id=item.id) }}" class="border rounded p-2 bg-light">
+                                            <input type="hidden" name="acao" value="aceitar">
+                                            <textarea name="justificativa" class="form-control form-control-sm mb-2" rows="2" placeholder="Comentário (opcional)"></textarea>
+                                            <button type="submit" class="btn btn-success btn-sm w-100">Confirmar Ciência</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Alerta de Bloqueio para Responsável quando Escalado e não Aceito -->
+                                {% if item.escalado and not item.escalado_aceito and current_user.id == item.responsavel_id %}
+                                <div class="alert alert-warning mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-lock-fill me-2" style="font-size: 1.5rem;"></i>
+                                        <div>
+                                            <strong>NC Escalada - Aguardando Confirmação</strong>
+                                            <p class="mb-0 small">Esta NC foi escalada para <strong>{{ item.escalado_para.nome }}</strong>. Você não poderá comentar ou realizar ações até que o superior aceite ou recuse o escalamento.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- SEÇÃO DE CONVERSA / COMENTÁRIOS -->
+                                {% if item.comentarios %}
+                                <hr>
+                                <div class="border rounded p-3 bg-light mb-3" style="max-height: 400px; overflow-y: auto;">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="mb-0"><i class="bi bi-chat-dots"></i> Histórico de Comentários</h6>
+                                        {% if item.resultado == 'Conforme' %}
+                                            <span class="badge bg-success">✅ Concluído</span>
+                                        {% elif item.resultado == 'N/A' %}
+                                            <span class="badge bg-secondary">✅ Concluído (N/A)</span>
+                                        {% elif item.resultado == 'Não Conforme' and item.status_nc == 'Resolvida' %}
+                                            <span class="badge bg-success">✅ Resolvido</span>
+                                        {% elif item.resultado == 'Não Conforme' %}
+                                            <span class="badge bg-warning">⚠️ NC em Andamento</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if item.comentarios %}
+                                        {% for comentario in item.comentarios %}
+                                        <div class="mb-2">
+                                            <div class="d-flex align-items-start">
+                                                <div class="me-2">
+                                                    {% if comentario.usuario_id == checklist.criador_id %}
+                                                        <span class="badge bg-primary" title="Auditor">👨‍💼</span>
+                                                    {% elif comentario.usuario_id == item.responsavel_id %}
+                                                        <span class="badge bg-success" title="Responsável">👷</span>
+                                                    {% elif item.escalado_para_id and comentario.usuario_id == item.escalado_para_id %}
+                                                        <span class="badge bg-warning" title="Superior">⭐</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">👤</span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="bg-white border rounded p-2 {% if comentario.tipo_solicitacao %}border-info border-2{% endif %}">
+                                                        <div class="d-flex justify-content-between">
+                                                            <strong class="text-primary">{{ comentario.usuario.nome }}</strong>
+                                                            <small class="text-muted">{{ (comentario.data_criacao|brasilia).strftime('%d/%m %H:%M') }}</small>
+                                                        </div>
+                                                        <p class="mb-0 mt-1">{{ comentario.comentario }}</p>
+                                                        
+                                                        <!-- Status de aprovação -->
+                                                        {% if comentario.tipo_solicitacao %}
+                                                        <div class="mt-2">
+                                                            {% if comentario.status_aprovacao == 'pendente' %}
+                                                                <span class="badge bg-warning">⏳ Aguardando aprovação de {{ checklist.criador.nome }}</span>
+                                                                
+                                                                <!-- Botões de aprovação (apenas para auditor) -->
+                                                                {% if current_user.id == checklist.criador_id %}
+                                                                <div class="mt-2">
+                                                                    <!-- Botões lado a lado -->
+                                                                    <div class="d-flex gap-2 mb-2">
+                                                                        <button class="btn btn-success btn-sm" data-bs-toggle="collapse" data-bs-target="#aprovarForm{{ comentario.id }}">
+                                                                            <i class="bi bi-check-circle"></i> Aprovar
+                                                                        </button>
+                                                                        <button class="btn btn-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#rejeitarForm{{ comentario.id }}">
+                                                                            <i class="bi bi-x-circle"></i> Rejeitar
+                                                                        </button>
+                                                                    </div>
+                                                                    
+                                                                    <!-- Formulário de Aprovar -->
+                                                                    <div id="aprovarForm{{ comentario.id }}" class="collapse">
+                                                                        <form method="POST" action="{{ url_for('aprovacao.aprovar_solicitacao', comentario_id=comentario.id) }}" class="border rounded p-2 bg-light mb-2">
+                                                                            <input type="hidden" name="acao" value="aprovar">
+                                                                            <textarea name="justificativa" class="form-control form-control-sm mb-2" rows="2" placeholder="Justificativa (opcional)"></textarea>
+                                                                            <button type="submit" class="btn btn-success btn-sm w-100">Confirmar Aprovação</button>
+                                                                        </form>
+                                                                    </div>
+                                                                    
+                                                                    <!-- Formulário de Rejeitar -->
+                                                                    <div id="rejeitarForm{{ comentario.id }}" class="collapse">
+                                                                        <form method="POST" action="{{ url_for('aprovacao.aprovar_solicitacao', comentario_id=comentario.id) }}" class="border rounded p-2 bg-light">
+                                                                            <input type="hidden" name="acao" value="rejeitar">
+                                                                            <textarea name="justificativa" class="form-control form-control-sm mb-2" rows="2" placeholder="Motivo da rejeição (opcional)"></textarea>
+                                                                            <button type="submit" class="btn btn-danger btn-sm w-100">Confirmar Rejeição</button>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>
+                                                                {% endif %}
+                                                            
+                                                            {% elif comentario.status_aprovacao == 'aprovado' %}
+                                                                <span class="badge bg-success">✅ Aprovado por {{ comentario.aprovador.nome }}</span>
+                                                            
+                                                            {% elif comentario.status_aprovacao == 'rejeitado' %}
+                                                                <span class="badge bg-danger">❌ Rejeitado por {{ comentario.aprovador.nome }}</span>
+                                                            
+                                                            {% elif comentario.status_aprovacao == 'cancelado' %}
+                                                                <span class="badge bg-secondary">⚠️ Cancelado (ação direta do auditor)</span>
+                                                            {% endif %}
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Formulário de comentário e controles (apenas para NCs ativas) -->
+                                {% if item.resultado == 'Não Conforme' and item.status_nc != 'Resolvida' %}
+                                
+                                <!-- Controles do Responsável (marcar como resolvida) -->
+                                {% set tem_aprovacao_pendente = item.comentarios|selectattr('tipo_solicitacao', 'ne', None)|selectattr('status_aprovacao', 'equalto', 'pendente')|list|length > 0 %}
+                                {% if current_user.id == item.responsavel_id and not tem_aprovacao_pendente and not (item.escalado and not item.escalado_aceito) %}
+                                <div class="border rounded p-3 bg-info bg-opacity-10 mb-3">
+                                    <h6 class="mb-3"><i class="bi bi-gear"></i> Controles do Responsável</h6>
+                                    
+                                    <!-- Marcar como Resolvida -->
+                                    <button class="btn btn-success btn-sm w-100" data-bs-toggle="collapse" data-bs-target="#resolverModalNC{{ item.id }}">
+                                        <i class="bi bi-check-circle"></i> Marcar como Resolvida
+                                    </button>
+                                    
+                                    <div class="collapse mt-2" id="resolverModalNC{{ item.id }}">
+                                        <form method="POST" action="{{ url_for('nc.atualizar_status', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                            <input type="hidden" name="status" value="Resolvida">
+                                            <div class="mb-2">
+                                                <label class="form-label fw-bold">Como a NC foi resolvida? *</label>
+                                                <textarea name="justificativa_resolucao" class="form-control" rows="3" placeholder="Descreva as ações tomadas para resolver a não conformidade..." required></textarea>
+                                            </div>
+                                            <div class="d-grid gap-2">
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="bi bi-send"></i> Solicitar Aprovação
+                                                </button>
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#resolverModalNC{{ item.id }}">
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                
+                                <!-- Controles do Superior (quando escalado e aceito) -->
+                                {% elif item.escalado and item.escalado_aceito and current_user.id == item.escalado_para_id and not tem_aprovacao_pendente %}
+                                <div class="border rounded p-3 bg-warning bg-opacity-10 mb-3">
+                                    <h6 class="mb-3"><i class="bi bi-gear"></i> Controles do Superior</h6>
+                                    
+                                    <div class="d-flex flex-column gap-2">
+                                        <!-- Propor Novo Prazo -->
+                                        <button class="btn btn-warning btn-sm" data-bs-toggle="collapse" data-bs-target="#proporPrazoSuperior{{ item.id }}">
+                                            <i class="bi bi-calendar-plus"></i> Propor Novo Prazo
+                                        </button>
+                                        
+                                        <!-- Fechar NC -->
+                                        <button class="btn btn-success btn-sm" data-bs-toggle="collapse" data-bs-target="#fecharNCSuperior{{ item.id }}">
+                                            <i class="bi bi-check-circle"></i> Fechar NC
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Formulário de propor prazo (superior) -->
+                                    <div class="collapse mt-2" id="proporPrazoSuperior{{ item.id }}">
+                                        <form method="POST" action="{{ url_for('aprovacao.propor_prazo', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                            <h6 class="fw-bold mb-3"><i class="bi bi-calendar-plus"></i> Propor Novo Prazo</h6>
+                                            <div class="mb-2">
+                                                <label class="form-label fw-bold">Nova Data de Resolução *</label>
+                                                <input type="date" name="nova_data_resolucao" class="form-control" required>
+                                                <small class="text-muted">Prazo atual: {{ item.get_prazo_limite().strftime('%d/%m/%Y') if item.get_prazo_limite() else 'Não definido' }}</small>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Motivo *</label>
+                                                <textarea name="motivo_prazo" class="form-control" rows="2" placeholder="Explique o motivo da mudança de prazo..." required></textarea>
+                                            </div>
+                                            <div class="d-grid gap-2">
+                                                <button type="submit" class="btn btn-warning">
+                                                    <i class="bi bi-send"></i> Solicitar Aprovação
+                                                </button>
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#proporPrazoSuperior{{ item.id }}">
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    
+                                    <!-- Formulário de fechar NC (superior) -->
+                                    <div class="collapse mt-2" id="fecharNCSuperior{{ item.id }}">
+                                        <form method="POST" action="{{ url_for('aprovacao.fechar_nc', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                            <h6 class="fw-bold mb-3"><i class="bi bi-check-circle"></i> Fechar NC</h6>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Motivo do Fechamento *</label>
+                                                <textarea name="motivo_fechamento" class="form-control" rows="3" placeholder="Explique o motivo do fechamento desta NC..." required></textarea>
+                                            </div>
+                                            <div class="d-grid gap-2">
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="bi bi-send"></i> Solicitar Aprovação
+                                                </button>
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#fecharNCSuperior{{ item.id }}">
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                
+                                {% elif item.escalado and not item.escalado_aceito %}
+                                <div class="alert alert-warning text-center mb-3">
+                                    <i class="bi bi-hourglass-split"></i> Aguardando aceite do superior ({{ item.escalado_para.nome }})
+                                </div>
+                                {% elif tem_aprovacao_pendente %}
+                                <div class="alert alert-info text-center mb-3">
+                                    <i class="bi bi-hourglass-split"></i> Aguardando aprovação de {{ item.checklist.criador.nome }} (Auditor)
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Formulário de comentário - Bloqueado para responsável e superior quando escalado e não aceito -->
+                                {% if not (item.escalado and not item.escalado_aceito and (current_user.id == item.responsavel_id or current_user.id == item.escalado_para_id)) %}
+                                <form method="POST" action="{{ url_for('nc.comentar_item', item_id=item.id) }}" class="mb-2">
+                                    <div class="input-group">
+                                        <input type="text" name="comentario" class="form-control" placeholder="Digite seu comentário..." required>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-send"></i> Enviar
+                                        </button>
+                                    </div>
+                                </form>
+                                {% endif %}
+                                
+                                <!-- Botões de ação do AUDITOR (pode fechar e propor prazo SEM aprovação) -->
+                                {% if current_user.id == checklist.criador_id %}
+                                <div class="d-flex flex-column gap-2 mb-3">
+                                    <!-- Botão de Escalar (apenas auditor, se não escalado e NC não resolvida) -->
+                                    {% if not item.escalado and item.responsavel and item.responsavel.superior_id and item.status_nc != 'Resolvida' %}
+                                    <form action="{{ url_for('nc.escalar', item_id=item.id) }}" method="POST" onsubmit="return confirm('Escalar esta NC para {{ item.responsavel.superior.nome }}?');">
+                                        <button type="submit" class="btn btn-warning btn-sm w-100">
+                                            <i class="bi bi-arrow-up-circle"></i> Escalar para Superior
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    
+                                    <!-- Botões de Propor Prazo e Fechar NC (AUDITOR - sempre disponíveis) -->
+                                    <div class="btn-group w-100" role="group">
+                                        <button class="btn btn-warning btn-sm" data-bs-toggle="collapse" data-bs-target="#proporPrazoModal{{ item.id }}">
+                                            <i class="bi bi-calendar-plus"></i> Propor Novo Prazo
+                                        </button>
+                                        <button class="btn btn-success btn-sm" data-bs-toggle="collapse" data-bs-target="#fecharNCModal{{ item.id }}">
+                                            <i class="bi bi-check-circle"></i> Fechar NC
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Formulário de propor novo prazo (AUDITOR - sem aprovação) -->
+                                <div class="collapse mb-2" id="proporPrazoModal{{ item.id }}">
+                                    <form method="POST" action="{{ url_for('aprovacao.propor_prazo', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                        <h6 class="fw-bold mb-3"><i class="bi bi-calendar-plus"></i> Propor Novo Prazo (Auditor)</h6>
+                                        <div class="mb-2">
+                                            <label class="form-label fw-bold">Nova Data de Resolução *</label>
+                                            <input type="date" name="nova_data_resolucao" class="form-control" required>
+                                            <small class="text-muted">Prazo atual: {{ item.get_prazo_limite().strftime('%d/%m/%Y') if item.get_prazo_limite() else 'Não definido' }}</small>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">Motivo (opcional)</label>
+                                            <textarea name="motivo_prazo" class="form-control" rows="2" placeholder="Explique o motivo da mudança de prazo..."></textarea>
+                                        </div>
+                                        <div class="d-grid gap-2">
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="bi bi-calendar-check"></i> Confirmar Novo Prazo
+                                            </button>
+                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#proporPrazoModal{{ item.id }}">
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                                
+                                <!-- Formulário de fechar NC (AUDITOR - sem aprovação) -->
+                                <div class="collapse" id="fecharNCModal{{ item.id }}">
+                                    <form method="POST" action="{{ url_for('aprovacao.fechar_nc', item_id=item.id) }}" class="border rounded p-3 bg-light">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">Motivo do Fechamento *</label>
+                                            <textarea name="motivo_fechamento" class="form-control" rows="3" placeholder="Explique o motivo do fechamento desta NC..." required></textarea>
+                                        </div>
+                                        <div class="d-grid gap-2">
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="bi bi-check-circle-fill"></i> Confirmar Fechamento
+                                            </button>
+                                            <button type="button" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#fecharNCModal{{ item.id }}">
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                    <h5 class="mt-3">Checklist ainda não foi preenchido</h5>
+                    <p class="text-muted">Preencha os itens do checklist para visualizá-los aqui</p>
+                    {% if checklist.criador_id == current_user.id %}
+                    <a href="{{ url_for('preencher.preencher_checklist', checklist_id=checklist.id) }}" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Preencher Checklist
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmação reutilizável para escalonamento -->
+<div class="modal fade" id="confirmEscalaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-sm">
+            <div class="modal-header bg-warning text-dark align-items-center">
+                <h5 class="modal-title mb-0"><i class="bi bi-arrow-up-circle me-2"></i> Escalar Não Conformidade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="lead mb-1" id="confirmEscalaMessage">Deseja escalar esta NC para o superior do responsável?</p>
+                <p class="small text-muted mb-0" id="confirmEscalaContext">&nbsp;</p>
+                <!-- Formulário que será submetido pelo JS; action será montada dinamicamente -->
+                <form id="confirmEscalaForm" method="POST" action="{{ url_for('nc.escalar', item_id=0) }}" class="d-none">
+                    <!-- CSRF token será renderizado aqui se o app usar WTForms/CSRF -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" id="confirmEscalaSubmit">
+                    <i class="bi bi-send-fill me-1"></i> Escalar para Superior
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/ver_checklist.js') }}"></script>
+<script>
+// Script para controlar o modal de escalonamento
+document.addEventListener('DOMContentLoaded', function(){
+    var confirmModal = document.getElementById('confirmEscalaModal');
+    if(!confirmModal) return;
+    confirmModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var itemId = button.getAttribute('data-item-id');
+        var itemOrder = button.getAttribute('data-item-order');
+        var itemTitle = button.getAttribute('data-item-title');
+        // Atualiza mensagem/contexto
+        var msg = document.getElementById('confirmEscalaMessage');
+        var ctx = document.getElementById('confirmEscalaContext');
+        msg.textContent = 'Escalar a Não Conformidade para o superior do responsável?';
+        ctx.textContent = 'Item #' + itemOrder + ' — ' + itemTitle;
+        // Monta ação do form substituindo o 0 no endpoint gerado pelo Jinja
+        var form = document.getElementById('confirmEscalaForm');
+        var baseAction = form.getAttribute('action');
+        // baseAction contém URL com item_id=0, substituímos o '0' por itemId
+        var action = baseAction.replace(/0(?=\D*$)/, itemId);
+        form.setAttribute('action', action);
+        // Armazena itemId no botão de submit para controle
+        var submitBtn = document.getElementById('confirmEscalaSubmit');
+        submitBtn.setAttribute('data-item-id', itemId);
+    });
+
+    document.getElementById('confirmEscalaSubmit').addEventListener('click', function(e){
+        var form = document.getElementById('confirmEscalaForm');
+        // Submete o form programaticamente
+        form.submit();
+        // Opcional: podemos fechar o modal imediatamente
+        var modal = bootstrap.Modal.getInstance(document.getElementById('confirmEscalaModal'));
+        if(modal) modal.hide();
+        // Dispara uma notificação snackbar simples (se disponível)
+        if(window.showSnackbar){
+            window.showSnackbar('NC escalada para o superior — ação enviada');
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}
+

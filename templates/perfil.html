@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Perfil - Sistema NC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-person-circle"></i> Meu Perfil</h1>
+        <p class="text-muted">Gerencie suas informações pessoais e configurações</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Editar Perfil</h5>
+            </div>
+            <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" action="{{ url_for('auth.perfil') }}">
+                    <h6 class="border-bottom pb-2 mb-3">Informações Básicas</h6>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="nome" class="form-label fw-bold">
+                                <i class="bi bi-person"></i> Nome Completo *
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="nome" 
+                                   name="nome" 
+                                   value="{{ current_user.nome }}"
+                                   required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label fw-bold">
+                                <i class="bi bi-envelope"></i> Email *
+                            </label>
+                            <input type="email" 
+                                   class="form-control" 
+                                   id="email" 
+                                   name="email" 
+                                   value="{{ current_user.email }}"
+                                   required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="funcao" class="form-label fw-bold">
+                                <i class="bi bi-briefcase"></i> Função *
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="funcao" 
+                                   name="funcao" 
+                                   value="{{ current_user.funcao }}"
+                                   required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="superior_id" class="form-label fw-bold">
+                                <i class="bi bi-person-badge"></i> Superior Imediato
+                            </label>
+                            <select class="form-select" id="superior_id" name="superior_id">
+                                <option value="">Nenhum (Cargo de chefia)</option>
+                                {% for usuario in usuarios %}
+                                    <option value="{{ usuario.id }}" 
+                                            {% if current_user.superior_id == usuario.id %}selected{% endif %}>
+                                        {{ usuario.nome }} - {{ usuario.funcao }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Seu superior receberá NCs escaladas</small>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h6 class="border-bottom pb-2 mb-3">Alterar Senha (opcional)</h6>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>Deixe em branco se não quiser alterar a senha</strong>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="senha_atual" class="form-label fw-bold">
+                                <i class="bi bi-lock"></i> Senha Atual
+                            </label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="senha_atual" 
+                                   name="senha_atual"
+                                   placeholder="Digite sua senha atual">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nova_senha" class="form-label fw-bold">
+                                <i class="bi bi-lock-fill"></i> Nova Senha
+                            </label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="nova_senha" 
+                                   name="nova_senha"
+                                   minlength="6"
+                                   placeholder="Mínimo 6 caracteres">
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                        <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Voltar
+                        </a>
+                        <button type="submit" class="btn btn-primary px-5">
+                            <i class="bi bi-check-circle"></i> Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Informações adicionais -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Informações da Conta</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Data de Cadastro:</strong><br>
+                            <small class="text-muted">{{ current_user.data_criacao.strftime('%d/%m/%Y %H:%M') }}</small>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Status da Conta:</strong><br>
+                            {% if current_user.ativo %}
+                                <span class="badge bg-success">Ativa</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inativa</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                {% if current_user.superior %}
+                <hr>
+                <div class="alert alert-light mb-0">
+                    <strong><i class="bi bi-person-badge"></i> Seu Superior Atual:</strong> 
+                    {{ current_user.superior.nome }} - {{ current_user.superior.funcao }}
+                </div>
+                {% endif %}
+                
+                {% if current_user.subordinados %}
+                <hr>
+                <div class="alert alert-light mb-0">
+                    <strong><i class="bi bi-people"></i> Seus Subordinados ({{ current_user.subordinados|length }}):</strong>
+                    <ul class="mb-0 mt-2">
+                        {% for subordinado in current_user.subordinados %}
+                            <li>{{ subordinado.nome }} - {{ subordinado.funcao }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+}
+
+.card-header {
+    border-bottom: 2px solid rgba(0,0,0,.125);
+}
+
+.form-label {
+    margin-bottom: 0.5rem;
+}
+
+.alert-info {
+    background-color: #e7f3ff;
+    border-color: #b3d9ff;
+    color: #004085;
+}
+</style>
+{% endblock %}
