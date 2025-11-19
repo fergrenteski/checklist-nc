@@ -17,3 +17,38 @@
 .modal.show {
     display: block;
 }
+
+/* Forçar barra de rolagem horizontal visível no container da tabela */
+.table-responsive {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch; /* rolagem suave em iOS */
+}
+
+/* Estilizar a barra de rolagem horizontal (WebKit) */
+.table-responsive::-webkit-scrollbar {
+    height: 10px;
+}
+.table-responsive::-webkit-scrollbar-track {
+    background: transparent;
+}
+.table-responsive::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.18);
+    border-radius: 8px;
+}
+
+/* Tornar os botões não quebráveis e garantir visibilidade */
+.table td .btn-group,
+.table td .btn {
+    white-space: nowrap;
+}
+
+/* Mobile: garantir espaço para o bloco expandido e evitar sobreposição */
+@media (max-width: 767.98px) {
+    .table-responsive {
+        padding-bottom: 0.5rem; /* espaço para a scrollbar e botões */
+    }
+    .modal.fullscreen-sm-down .modal-content {
+        padding-bottom: 1.5rem;
+    }
+}

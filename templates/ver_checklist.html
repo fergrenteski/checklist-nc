@@ -116,10 +116,11 @@
                                 <th>#</th>
                                 <th>Seção</th>
                                 <th>Item de Verificação</th>
-                                <th>Critério</th>
+                                <th class="d-none d-md-table-cell">Critério</th>
                                 <th>Resultado</th>
-                                <th>Classificação NC</th>
-                                <th>Responsável</th>
+                                <th class="d-none d-md-table-cell">Classificação NC</th>
+                                <th class="d-none d-md-table-cell">Responsável</th>
+                                <th class="d-none d-sm-table-cell">Data Abertura</th>
                                 <th>Status</th>
                                 <th>Ações</th>
                             </tr>
@@ -130,7 +131,7 @@
                                 <td data-label="#"><strong>{{ item.item_template.ordem }}</strong></td>
                                 <td data-label="Seção">{{ item.item_template.secao }}</td>
                                 <td data-label="Item de Verificação">{{ item.item_template.item_verificacao }}</td>
-                                <td data-label="Critério">
+                                <td class="d-none d-md-table-cell" data-label="Critério">
                                     <small>{{ item.item_template.criterio_conformidade[:50] }}
                                     {% if item.item_template.criterio_conformidade|length > 50 %}...{% endif %}</small>
                                 </td>
@@ -149,7 +150,7 @@
                                         <span class="badge bg-warning">Pendente</span>
                                     {% endif %}
                                 </td>
-                                <td data-label="Classificação NC">
+                                <td class="d-none d-md-table-cell" data-label="Classificação NC">
                                     {% if item.classificacao_nc == 'L' %}
                                         <span class="badge badge-leve">🟢 Leve</span>
                                     {% elif item.classificacao_nc == 'M' %}
@@ -160,7 +161,7 @@
                                         -
                                     {% endif %}
                                 </td>
-                                <td data-label="Responsável">
+                                <td class="d-none d-md-table-cell" data-label="Responsável">
                                     {% if item.responsavel %}
                                         {{ item.responsavel.nome }}
                                         {% if item.escalado %}
@@ -168,6 +169,13 @@
                                             <i class="bi bi-arrow-up-circle"></i> Escalado para: {{ item.escalado_para.nome }}
                                         </small>
                                         {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="d-none d-sm-table-cell" data-label="Data Abertura">
+                                    {% if item.data_criacao %}
+                                        {{ (item.data_criacao|brasilia).strftime('%d/%m/%Y %H:%M') }}
                                     {% else %}
                                         -
                                     {% endif %}
@@ -210,6 +218,27 @@
                                         {% endif %}
                                     </div>
                                 </td>
+                                <!-- Mobile-only expanded info (full-width row inside the same tr) -->
+                                <td class="d-md-none" colspan="10">
+                                    <div class="small text-muted">
+                                        <div><strong>Data Abertura:</strong>
+                                            {% if item.data_criacao %}
+                                                {{ (item.data_criacao|brasilia).strftime('%d/%m/%Y %H:%M') }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </div>
+                                        <div class="mt-1"><strong>Responsável:</strong>
+                                            {% if item.responsavel %}{{ item.responsavel.nome }}{% else %}-{% endif %}
+                                        </div>
+                                        <div class="mt-1"><strong>Classificação:</strong>
+                                            {% if item.classificacao_nc == 'L' %}Leve
+                                            {% elif item.classificacao_nc == 'M' %}Moderada
+                                            {% elif item.classificacao_nc == 'G' %}Grave
+                                            {% else %}-{% endif %}
+                                        </div>
+                                    </div>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -219,7 +248,7 @@
                 <!-- Modais de Detalhes (fora da tabela) -->
                 {% for item in checklist.itens|sort(attribute='item_template.ordem') %}
                 <div class="modal fade" id="detalhesModal{{ item.id }}" tabindex="-1">
-                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title">Detalhes do Item #{{ item.item_template.ordem }}</h5>
@@ -240,6 +269,11 @@
                                     <dd class="col-sm-8">
                                         {% if item.resultado %}{{ item.resultado }}{% else %}Não preenchido{% endif %}
                                     </dd>
+
+                                    {% if item.data_criacao %}
+                                    <dt class="col-sm-4">Data de Abertura:</dt>
+                                    <dd class="col-sm-8">{{ (item.data_criacao|brasilia).strftime('%d/%m/%Y %H:%M') }}</dd>
+                                    {% endif %}
                                     
                                     {% if item.observacao %}
                                     <dt class="col-sm-4">Observação:</dt>
@@ -655,7 +689,7 @@
 
 <!-- Modal de confirmação reutilizável para escalonamento -->
 <div class="modal fade" id="confirmEscalaModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
         <div class="modal-content border-0 shadow-sm">
             <div class="modal-header bg-warning text-dark align-items-center">
                 <h5 class="modal-title mb-0"><i class="bi bi-arrow-up-circle me-2"></i> Escalar Não Conformidade</h5>
